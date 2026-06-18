@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eSocial Brasil Review devs - Relatório de Testes</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- html2pdf.js Bundle -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Canvas for Dynamic Galaxy Particles Background -->
+    <canvas id="galaxyCanvas"></canvas>
+
+    <!-- App Wrapper -->
+    <div class="app-container">
+        
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-glow"></div>
+                <i data-lucide="shield-check" class="logo-icon"></i>
+                <span class="logo-text">eSocial Brasil <span class="highlight">Review devs</span></span>
+            </div>
+            <div class="status-indicator">
+                <span class="pulse-dot"></span>
+                <span class="status-label">Sistema Pronto</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            
+            <!-- Description / Hero intro -->
+            <section class="intro-section">
+                <h1>Gerador de Relatórios de Testes</h1>
+                <p>Transforme dados brutos de QA em relatórios executivos altamente profissionais e prontos para apresentação em segundos.</p>
+            </section>
+
+            <!-- Input Glassmorphic Panel -->
+            <section class="glass-panel input-panel">
+                <div class="panel-header">
+                    <i data-lucide="file-text" class="panel-icon"></i>
+                    <h2>Dados do Relatório</h2>
+                </div>
+
+                <div class="panel-grid">
+                    <!-- Text Area Input -->
+                    <div class="input-group text-input-area">
+                        <label for="rawInput">Insira os Testes Realizados</label>
+                        <div class="textarea-container">
+                            <textarea id="rawInput" placeholder="Cole os testes aqui... (Ex: #0001 | Login API | João Silva | 15/06/2026 | Aprovado | OK) ou clique nos templates abaixo."></textarea>
+                            <!-- Drag and Drop Overlay -->
+                            <div class="drag-drop-overlay" id="dragDropOverlay">
+                                <i data-lucide="upload-cloud"></i>
+                                <p>Solte o arquivo .txt aqui</p>
+                            </div>
+                        </div>
+                        <div class="textarea-actions">
+                            <div class="templates-suggest">
+                                <button type="button" class="btn-secondary btn-xs" id="btnTemplateTXT">
+                                    <i data-lucide="file-code" class="icon-xs"></i> Usar Modelo TXT
+                                </button>
+                                <button type="button" class="btn-secondary btn-xs" id="btnTemplateJSON">
+                                    <i data-lucide="braces" class="icon-xs"></i> Usar Modelo JSON
+                                </button>
+                            </div>
+                            <span class="char-count" id="charCount">0 caracteres</span>
+                        </div>
+                    </div>
+
+                    <!-- Metadata Fields -->
+                    <div class="metadata-fields">
+                        <div class="input-field">
+                            <label for="testerName">
+                                <i data-lucide="user" class="field-icon"></i> Testador Responsável
+                            </label>
+                            <input type="text" id="testerName" placeholder="Nome do QA / Testador">
+                        </div>
+
+                        <div class="input-field">
+                            <label for="extraTasks">
+                                <i data-lucide="plus-circle" class="field-icon"></i> Tarefas Extras Realizadas
+                            </label>
+                            <input type="number" id="extraTasks" min="0" value="0">
+                        </div>
+
+                        <div class="input-field-row">
+                            <div class="input-field">
+                                <label for="startDate">
+                                    <i data-lucide="calendar" class="field-icon"></i> Período Início
+                                </label>
+                                <input type="date" id="startDate" value="2026-04-28">
+                            </div>
+                            <div class="input-field">
+                                <label for="endDate">
+                                    <i data-lucide="calendar" class="field-icon"></i> Período Fim
+                                </label>
+                                <input type="date" id="endDate">
+                            </div>
+                        </div>
+
+                        <!-- File Upload Button Alternative -->
+                        <div class="file-upload-box" id="fileUploadBox">
+                            <input type="file" id="fileInput" accept=".txt,.json" class="hidden-file-input">
+                            <div class="upload-inner">
+                                <i data-lucide="upload" class="upload-icon"></i>
+                                <span>Arraste ou clique para enviar arquivo TXT / JSON</span>
+                            </div>
+                        </div>
+
+                        <button class="btn-primary" id="btnProcess">
+                            <i data-lucide="cpu"></i> Processar Dados e Gerar Relatório
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Dashboard Section (Hidden by default, shown after processing) -->
+            <section class="dashboard-section" id="dashboardSection" style="display: none;">
+                
+                <!-- Performance Header Overview -->
+                <div class="dashboard-overview-bar">
+                    <div class="dashboard-title">
+                        <h3>Dashboard de Resultados</h3>
+                        <p id="generationTime">Gerado em: --/--/---- --:--:--</p>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn-preview" id="btnPreviewModal">
+                            <i data-lucide="eye"></i> Pré-visualizar A4
+                        </button>
+                        <button class="btn-download" id="btnDownloadPDF">
+                            <i data-lucide="download"></i> Baixar PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPI Cards Grid -->
+                <div class="kpi-grid">
+                    <div class="kpi-card" data-kpi="total">
+                        <div class="kpi-header">
+                            <span>Total de Testes</span>
+                            <i data-lucide="layers" class="icon-kpi"></i>
+                        </div>
+                        <div class="kpi-value" id="kpiTotal">0</div>
+                    </div>
+                    <div class="kpi-card" data-kpi="approved">
+                        <div class="kpi-header">
+                            <span>Aprovados</span>
+                            <i data-lucide="check-circle" class="icon-kpi"></i>
+                        </div>
+                        <div class="kpi-value" id="kpiApproved">0</div>
+                    </div>
+                    <div class="kpi-card" data-kpi="reproved">
+                        <div class="kpi-header">
+                            <span>Reprovados</span>
+                            <i data-lucide="x-circle" class="icon-kpi"></i>
+                        </div>
+                        <div class="kpi-value" id="kpiReproved">0</div>
+                    </div>
+                    <div class="kpi-card" data-kpi="rate">
+                        <div class="kpi-header">
+                            <span>Taxa de Aprovação</span>
+                            <i data-lucide="percent" class="icon-kpi"></i>
+                        </div>
+                        <div class="kpi-value" id="kpiRate">0%</div>
+                    </div>
+                    <div class="kpi-card" data-kpi="extras">
+                        <div class="kpi-header">
+                            <span>Tarefas Extras</span>
+                            <i data-lucide="plus-circle" class="icon-kpi"></i>
+                        </div>
+                        <div class="kpi-value" id="kpiExtras">0</div>
+                    </div>
+                </div>
+
+                <!-- Tester / Score / Feedback Card -->
+                <div class="glass-panel rating-panel" id="ratingPanel">
+                    <div class="rating-grid">
+                        <div class="rating-info">
+                            <div class="tester-avatar-container">
+                                <i data-lucide="user-check" class="avatar-icon"></i>
+                                <div>
+                                    <h4 id="displayTesterName">Testador não informado</h4>
+                                    <p class="role-lbl">Analista de Qualidade QA</p>
+                                </div>
+                            </div>
+                            
+                            <div class="period-info">
+                                <i data-lucide="calendar-range" class="icon-sm"></i>
+                                <span>Período: <strong id="displayPeriod">--/--/---- a --/--/----</strong></span>
+                            </div>
+                        </div>
+
+                        <!-- Score Display -->
+                        <div class="score-display">
+                            <div class="score-ring">
+                                <span class="score-number" id="displayScore">0</span>
+                                <span class="score-max">pontos</span>
+                            </div>
+                            <div class="rating-badge" id="displayRatingBadge">Bom Desempenho</div>
+                        </div>
+
+                        <!-- Feedback Box -->
+                        <div class="feedback-box">
+                            <h5>Avaliação de Performance</h5>
+                            <p class="feedback-text" id="displayFeedbackText">--</p>
+                            <div class="recommendations">
+                                <strong>Recomendações:</strong>
+                                <span id="displayRecommendations">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Tables Section -->
+                <div class="tables-container">
+                    
+                    <!-- Execution Table Grid -->
+                    <div class="glass-panel table-panel">
+                        <div class="panel-header">
+                            <i data-lucide="list-todo" class="panel-icon"></i>
+                            <h3>Tabela de Execução Completa</h3>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table" id="executionTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Tarefa</th>
+                                        <th>Funcionário</th>
+                                        <th>Data</th>
+                                        <th>Status</th>
+                                        <th>Observação</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Status Separation Breakdown Cards -->
+                    <div class="status-breakdown-grid">
+                        
+                        <!-- Approved Panel -->
+                        <div class="glass-panel status-breakdown-card card-approved">
+                            <div class="panel-header text-success">
+                                <i data-lucide="check-check" class="status-icon success"></i>
+                                <h3>Detalhamento: Aprovados (<span id="countApprovedLabel">0</span>)</h3>
+                            </div>
+                            <ul class="breakdown-list list-approved" id="approvedBreakdownList">
+                                <!-- Dynamic list -->
+                            </ul>
+                        </div>
+
+                        <!-- Reproved Panel -->
+                        <div class="glass-panel status-breakdown-card card-reproved">
+                            <div class="panel-header text-danger">
+                                <i data-lucide="alert-triangle" class="status-icon danger"></i>
+                                <h3>Detalhamento: Reprovados (<span id="countReprovedLabel">0</span>)</h3>
+                            </div>
+                            <ul class="breakdown-list list-reproved" id="reprovedBreakdownList">
+                                <!-- Dynamic list -->
+                            </ul>
+                        </div>
+
+                    </div>
+                </div>
+
+            </section>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>&copy; 2026 eSocial Brasil Review devs. Todos os direitos reservados. Relatórios locais em conformidade com as regras QA.</p>
+        </footer>
+    </div>
+
+    <!-- A4 Preview Modal Container -->
+    <div class="modal-backdrop" id="previewModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>Visualização do Relatório (Formato A4)</h3>
+                <div class="modal-header-actions">
+                    <button class="btn-primary btn-sm" id="btnModalDownload">
+                        <i data-lucide="download"></i> Baixar PDF
+                    </button>
+                    <button class="btn-close" id="btnCloseModal">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="modal-body-scroll">
+                <!-- A4 Render Container (Matches exact margins and width for print) -->
+                <div class="a4-page-wrapper" id="pdfTemplateTarget">
+                    <!-- Clean styled document wrapper -->
+                    <div class="document-content">
+                        
+                        <!-- Header -->
+                        <div class="doc-header">
+                            <div class="doc-header-top">
+                                <div class="doc-logo-area">
+                                    <div class="logo-mark"></div>
+                                    <span class="doc-logo-title">eSocial Brasil <strong style="color: #6d28d9;">Review devs</strong></span>
+                                </div>
+                                <div class="doc-meta-badge">RELATÓRIO DE DESEMPENHO</div>
+                            </div>
+                            <div class="doc-header-divider"></div>
+                            
+                            <div class="doc-metadata-grid">
+                                <div class="doc-meta-item">
+                                    <span class="lbl">TESTADOR</span>
+                                    <span class="val" id="docTester">Testador não informado</span>
+                                </div>
+                                <div class="doc-meta-item">
+                                    <span class="lbl">PONTUAÇÃO</span>
+                                    <span class="val" id="docScore">0 pts</span>
+                                </div>
+                                <div class="doc-meta-item">
+                                    <span class="lbl">CLASSIFICAÇÃO</span>
+                                    <span class="val" id="docRating">--</span>
+                                </div>
+                                <div class="doc-meta-item">
+                                    <span class="lbl">DATA EMISSÃO</span>
+                                    <span class="val" id="docEmitDate">--/--/----</span>
+                                </div>
+                                <div class="doc-meta-item">
+                                    <span class="lbl">PERÍODO</span>
+                                    <span class="val" id="docPeriod">--/--/---- a --/--/----</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KPI Dashboard -->
+                        <div class="doc-section-title">📊 INDICADORES DE DESEMPENHO</div>
+                        <div class="doc-kpis">
+                            <div class="doc-kpi-box">
+                                <span class="doc-kpi-val" id="docKpiTotal">0</span>
+                                <span class="doc-kpi-lbl">Total de Testes</span>
+                            </div>
+                            <div class="doc-kpi-box">
+                                <span class="doc-kpi-val text-success" id="docKpiApproved">0</span>
+                                <span class="doc-kpi-lbl">Aprovados</span>
+                            </div>
+                            <div class="doc-kpi-box">
+                                <span class="doc-kpi-val text-danger" id="docKpiReproved">0</span>
+                                <span class="doc-kpi-lbl">Reprovados</span>
+                            </div>
+                            <div class="doc-kpi-box">
+                                <span class="doc-kpi-val" id="docKpiRate">0%</span>
+                                <span class="doc-kpi-lbl">Taxa de Sucesso</span>
+                            </div>
+                            <div class="doc-kpi-box">
+                                <span class="doc-kpi-val" id="docKpiExtras">0</span>
+                                <span class="doc-kpi-lbl">Extras</span>
+                            </div>
+                        </div>
+
+                        <!-- Performance Feedback -->
+                        <div class="doc-section-title">🧠 NOTA + FEEDBACK DE PERFORMANCE</div>
+                        <div class="doc-feedback-card" id="docFeedbackCard">
+                            <div class="doc-feedback-badge" id="docFeedbackBadge">Bom Desempenho</div>
+                            <div class="doc-feedback-body">
+                                <p class="doc-desc" id="docFeedbackDesc">--</p>
+                                <div class="doc-recs-box">
+                                    <strong>Recomendações:</strong>
+                                    <span id="docFeedbackRecs">--</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Execution Table -->
+                        <div class="doc-section-title">📋 TABELA DE RESULTADOS</div>
+                        <table class="doc-table" id="docTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 10%">ID</th>
+                                    <th style="width: 35%">Tarefa</th>
+                                    <th style="width: 20%">Funcionário</th>
+                                    <th style="width: 15%">Data</th>
+                                    <th style="width: 20%">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Dynamic -->
+                            </tbody>
+                        </table>
+
+                        <!-- Status Breakdown Details -->
+                        <div class="doc-section-title">🎨 DETALHAMENTO POR STATUS</div>
+                        <div class="doc-breakdown-grid">
+                            <div class="doc-breakdown-col">
+                                <div class="col-hdr text-success">🟢 Aprovados</div>
+                                <ul class="doc-list text-success" id="docApprovedList">
+                                    <!-- Dynamic -->
+                                </ul>
+                            </div>
+                            <div class="doc-breakdown-col">
+                                <div class="col-hdr text-danger">🔴 Reprovados</div>
+                                <ul class="doc-list text-danger" id="docReprovedList">
+                                    <!-- Dynamic -->
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Document Footer -->
+                        <div class="doc-footer">
+                            <span>eSocial Brasil Review devs &bull; Relatório Gerado Localmente</span>
+                            <span>Página 1 de 1</span>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script src="app.js"></script>
+</body>
+</html>
