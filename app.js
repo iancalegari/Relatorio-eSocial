@@ -8,6 +8,57 @@ document.addEventListener('DOMContentLoaded', () => {
         window.lucide.createIcons();
     }
 
+    // --- Toast Notification System ---
+    function showToast(message, type = 'error') {
+        let container = document.getElementById('toastContainer');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toastContainer';
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        const iconName = type === 'error' ? 'alert-triangle' : 'info';
+        
+        toast.innerHTML = `
+            <div class="toast-icon">
+                <i data-lucide="${iconName}"></i>
+            </div>
+            <div class="toast-content">
+                <span class="toast-title">${type === 'error' ? 'Erro' : 'Aviso'}</span>
+                <span class="toast-message">${message}</span>
+            </div>
+            <button class="toast-close">
+                <i data-lucide="x" class="icon-xs"></i>
+            </button>
+        `;
+        
+        container.appendChild(toast);
+        
+        if (window.lucide) {
+            window.lucide.createIcons({ root: toast });
+        }
+        
+        const closeBtn = toast.querySelector('.toast-close');
+        
+        const removeToast = () => {
+            toast.classList.add('closing');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        };
+        
+        closeBtn.addEventListener('click', removeToast);
+        
+        // Auto remove after 5 seconds
+        setTimeout(removeToast, 5000);
+    }
+
     // --- State Variables ---
     let parsedData = {
         testerName: 'Testador não informado',
@@ -30,8 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const btnProcess = document.getElementById('btnProcess');
     const btnTemplateTXT = document.getElementById('btnTemplateTXT');
-    const btnTemplateJSON = document.getElementById('btnTemplateJSON');
-    
+
     // Dashboard elements
     const dashboardSection = document.getElementById('dashboardSection');
     const generationTime = document.getElementById('generationTime');
@@ -40,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const kpiReproved = document.getElementById('kpiReproved');
     const kpiRate = document.getElementById('kpiRate');
     const kpiExtras = document.getElementById('kpiExtras');
-    
+
     const ratingPanel = document.getElementById('ratingPanel');
     const displayTesterName = document.getElementById('displayTesterName');
     const displayPeriod = document.getElementById('displayPeriod');
@@ -48,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const displayRatingBadge = document.getElementById('displayRatingBadge');
     const displayFeedbackText = document.getElementById('displayFeedbackText');
     const displayRecommendations = document.getElementById('displayRecommendations');
-    
+
     const executionTableBody = document.querySelector('#executionTable tbody');
     const approvedBreakdownList = document.getElementById('approvedBreakdownList');
     const reprovedBreakdownList = document.getElementById('reprovedBreakdownList');
@@ -59,9 +109,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const previewModal = document.getElementById('previewModal');
     const btnPreviewModal = document.getElementById('btnPreviewModal');
     const btnCloseModal = document.getElementById('btnCloseModal');
+    const scoreInfoModal = document.getElementById('scoreInfoModal');
+    const btnHelpScore = document.getElementById('btnHelpScore');
+    const btnCloseScoreModal = document.getElementById('btnCloseScoreModal');
     const btnDownloadPDF = document.getElementById('btnDownloadPDF');
     const btnModalDownload = document.getElementById('btnModalDownload');
+
     const pdfTemplateTarget = document.getElementById('pdfTemplateTarget');
+    const btnDownloadTemplateTXT = document.getElementById('btnDownloadTemplateTXT');
 
     // Document elements inside Modal
     const docTester = document.getElementById('docTester');
@@ -69,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const docRating = document.getElementById('docRating');
     const docEmitDate = document.getElementById('docEmitDate');
     const docPeriod = document.getElementById('docPeriod');
-    
+
     const docKpiTotal = document.getElementById('docKpiTotal');
     const docKpiApproved = document.getElementById('docKpiApproved');
     const docKpiReproved = document.getElementById('docKpiReproved');
@@ -80,10 +135,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const docFeedbackBadge = document.getElementById('docFeedbackBadge');
     const docFeedbackDesc = document.getElementById('docFeedbackDesc');
     const docFeedbackRecs = document.getElementById('docFeedbackRecs');
-    
+
     const docTableBody = document.querySelector('#docTable tbody');
     const docApprovedList = document.getElementById('docApprovedList');
     const docReprovedList = document.getElementById('docReprovedList');
+
+    const docExtraTasksSection = document.getElementById('docExtraTasksSection');
+    const docExtraTasksList = document.getElementById('docExtraTasksList');
 
     // Set Default End Date to current date
     const today = new Date().toISOString().split('T')[0];
@@ -98,82 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('testerName', testerNameInput.value.trim());
     });
 
-    // ==========================================================================
-    // 🌌 Canvas Galaxy Particles Animation
-    // ==========================================================================
-    const canvas = document.getElementById('galaxyCanvas');
-    const ctx = canvas.getContext('2d');
-    let particles = [];
-    const particleCount = 80;
-
-    function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    class Particle {
-        constructor() {
-            this.reset();
-        }
-
-        reset() {
-            this.x = Math.random() * canvas.width;
-            this.y = Math.random() * canvas.height;
-            this.radius = Math.random() * 2 + 0.5;
-            this.color = this.getRandomColor();
-            this.speed = Math.random() * 0.15 + 0.05;
-            this.angle = Math.random() * Math.PI * 2;
-        }
-
-        getRandomColor() {
-            const colors = [
-                'rgba(139, 92, 246, ', // violet
-                'rgba(6, 182, 212, ',  // cyan
-                'rgba(255, 255, 255, ', // white
-                'rgba(168, 85, 247, '  // purple
-            ];
-            const color = colors[Math.floor(Math.random() * colors.length)];
-            const opacity = Math.random() * 0.5 + 0.1;
-            return color + opacity + ')';
-        }
-
-        update() {
-            this.x += Math.cos(this.angle) * this.speed;
-            this.y += Math.sin(this.angle) * this.speed;
-
-            // Fade in/out slightly near edges
-            if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
-                this.reset();
-            }
-        }
-
-        draw() {
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = this.color;
-            ctx.fill();
-        }
-    }
-
-    // Initialize particles
-    for (let i = 0; i < particleCount; i++) {
-        particles.push(new Particle());
-    }
-
-    function animateGalaxy() {
-        ctx.fillStyle = 'rgba(4, 2, 10, 0.08)'; // Slight trail
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        particles.forEach(p => {
-            p.update();
-            p.draw();
-        });
-
-        requestAnimationFrame(animateGalaxy);
-    }
-    animateGalaxy();
+    // Galaxy animation removed as requested.
 
     // ==========================================================================
     // 📝 Templates & Character Counts
@@ -181,51 +164,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const txtTemplate = 
 `📌 CARD 01
 
-NOME DO CARD: Ajustar dados da Avaliação de Riscos no documento PPR e adicionar sincronização geral
-ID DO CARD: #10239
-SERVIDOR: Produção
-STATUS: ✔ APROVADO
-O QUE FOI REALIZADO NO TESTE: Sincronização geral executada com sucesso no banco de dados e arquivos gerados corretamente.
+Nome do card: 
+ID do card: 
+Servidor: 
+Status: (APROVADO / NEGADO)
+Observação teste: 
 
 📌 CARD 02
 
-NOME DO CARD: Envio de lote de eventos para o governo federal
-ID DO CARD: #10240
-SERVIDOR: Homologação
-STATUS: ❌ NEGADO
-O QUE FOI REALIZADO NO TESTE: Retornou erro de conexão devido a falha no certificado de autenticação.
+Nome do card: 
+ID do card: 
+Servidor: 
+Status: (APROVADO / NEGADO)
+Observação teste: 
 
 📊 RESULTADOS DO DIA
-Aprovados: 1
-Reprovados: 1
-Total Testados: 2
+Aprovados: 
+Reprovados: 
+Total Testados: 
 
 🧪 TAREFAS EXTRAS TESTADAS
-- Configuração do webhook de notificações
-- Revisão de segurança nas rotas de admin`;
-
-    const jsonTemplate = 
-`{
-  "extra_tasks": 3,
-  "tasks": [
-    {
-      "id": "#10239",
-      "task": "Ajustar dados da Avaliação de Riscos no documento PPR",
-      "employee": "João Silva",
-      "date": "15/06/2026",
-      "status": "Aprovado",
-      "note": "Sincronização geral executada com sucesso."
-    },
-    {
-      "id": "#10240",
-      "task": "Envio de lote de eventos",
-      "employee": "Maria Santos",
-      "date": "16/06/2026",
-      "status": "Reprovado",
-      "note": "Erro de certificado"
-    }
-  ]
-}`;
+- 
+- `;
 
     // Empty by default on startup
     rawInput.value = "";
@@ -240,9 +200,16 @@ Total Testados: 2
         charCount.textContent = `${txtTemplate.length} caracteres`;
     });
 
-    btnTemplateJSON.addEventListener('click', () => {
-        rawInput.value = jsonTemplate;
-        charCount.textContent = `${jsonTemplate.length} caracteres`;
+    btnDownloadTemplateTXT.addEventListener('click', () => {
+        const blob = new Blob([txtTemplate], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'modelo_relatorio_testes.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     });
 
     // ==========================================================================
@@ -258,7 +225,7 @@ Total Testados: 2
         }
     });
 
-    // Drag and Drop
+    // Drag and Drop on Textarea Container
     const container = document.querySelector('.textarea-container');
     
     container.addEventListener('dragover', (e) => {
@@ -278,23 +245,94 @@ Total Testados: 2
         }
     });
 
+    // Drag and Drop directly on File Upload Box
+    fileUploadBox.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileUploadBox.style.borderColor = 'rgba(156, 206, 195, 0.9)';
+        fileUploadBox.style.background = 'rgba(156, 206, 195, 0.08)';
+    });
+
+    fileUploadBox.addEventListener('dragleave', () => {
+        fileUploadBox.style.borderColor = '';
+        fileUploadBox.style.background = '';
+    });
+
+    fileUploadBox.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileUploadBox.style.borderColor = '';
+        fileUploadBox.style.background = '';
+        if (e.dataTransfer.files.length > 0) {
+            handleUploadedFile(e.dataTransfer.files[0]);
+        }
+    });
+
+    function clearUploadedFile() {
+        fileInput.value = '';
+        rawInput.value = '';
+        charCount.textContent = '0 caracteres';
+        
+        fileUploadBox.classList.remove('uploaded');
+        const uploadInner = fileUploadBox.querySelector('.upload-inner');
+        if (uploadInner) {
+            uploadInner.innerHTML = `
+                <i data-lucide="upload" class="upload-icon"></i>
+                <span>Arraste ou clique para enviar arquivo TXT</span>
+            `;
+            if (window.lucide) {
+                window.lucide.createIcons({ root: fileUploadBox });
+            }
+        }
+        showToast("Arquivo removido", "info");
+    }
+
     function handleUploadedFile(file) {
+        if (!file.name.endsWith('.txt')) {
+            showToast("Formato de arquivo inválido. Por favor, envie um arquivo .txt", "error");
+            return;
+        }
+
         const reader = new FileReader();
         reader.onload = function(evt) {
-            rawInput.value = evt.target.result;
-            charCount.textContent = `${evt.target.result.length} caracteres`;
+            const fileContent = evt.target.result;
+            rawInput.value = fileContent;
+            charCount.textContent = `${fileContent.length} caracteres`;
             
-            // Try to auto-detect and populate metadata if JSON file loaded
-            if (file.name.endsWith('.json')) {
-                try {
-                    const parsed = JSON.parse(evt.target.result);
-                    if (parsed.extra_tasks !== undefined) {
-                        extraTasksInput.value = parsed.extra_tasks;
-                    }
-                } catch(err) {
-                    // Fail silently, just parsed as raw text
+            // Visual Feedback in File Upload Box
+            fileUploadBox.classList.add('uploaded');
+            const uploadInner = fileUploadBox.querySelector('.upload-inner');
+            if (uploadInner) {
+                uploadInner.innerHTML = `
+                    <div class="file-active-state">
+                        <i data-lucide="file-text" class="upload-icon-large"></i>
+                        <span class="file-name-label" title="${file.name}">${file.name}</span>
+                        <span class="file-subtext">Pronto para processar</span>
+                        <button type="button" class="btn-remove-file" id="btnRemoveFile" title="Remover arquivo">
+                            <i data-lucide="x"></i>
+                        </button>
+                    </div>
+                `;
+                if (window.lucide) {
+                    window.lucide.createIcons({ root: fileUploadBox });
+                }
+
+                // Bind remove button click
+                const btnRemove = uploadInner.querySelector('#btnRemoveFile');
+                if (btnRemove) {
+                    btnRemove.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        clearUploadedFile();
+                    });
                 }
             }
+
+            showToast(`Arquivo "${file.name}" carregado com sucesso!`, "success");
+            
+            // Reset input value to allow uploading the same file again if needed
+            fileInput.value = '';
+        };
+        reader.onerror = function() {
+            showToast("Erro ao ler o arquivo. Tente novamente.", "error");
         };
         reader.readAsText(file);
     }
@@ -359,44 +397,31 @@ Total Testados: 2
         text = text.trim();
         if (!text) return [];
 
-        // Check if input is JSON
-        if (text.startsWith('{') || text.startsWith('[')) {
-            try {
-                const data = JSON.parse(text);
-                let rawTasks = [];
-                if (Array.isArray(data)) {
-                    rawTasks = data;
-                } else if (data.tasks && Array.isArray(data.tasks)) {
-                    rawTasks = data.tasks;
-                }
-                
-                return rawTasks.map(t => {
-                    const statusVal = t.status || '';
-                    const detected = detectStatus(statusVal) || detectStatus(t.task) || detectStatus(t.note) || 'Aprovado';
-                    return {
-                        id: cleanMarkdownAndEmojis(t.id),
-                        task: cleanMarkdownAndEmojis(t.task),
-                        employee: cleanMarkdownAndEmojis(t.employee),
-                        date: cleanMarkdownAndEmojis(t.date),
-                        status: detected,
-                        note: cleanMarkdownAndEmojis(t.note || '')
-                    };
-                });
-            } catch(e) {
-                console.warn("JSON parsing failed, falling back to plain text parser.", e);
-            }
-        }
-
         // 1. If the text has block layout tags ("nome do card:" or "id do card:"), use Block Parser
         if (text.toLowerCase().includes('nome do card:') || text.toLowerCase().includes('id do card:')) {
             const lines = text.split('\n');
             const tasks = [];
             let currentTask = null;
+            let parsingExtraTasks = false;
+            let extraTasksTextList = [];
 
             lines.forEach(line => {
                 let originalLine = line;
                 line = line.trim();
                 if (!line) return;
+
+                if (parsingExtraTasks) {
+                    if (line.match(/📌\s*CARD/i) || line.match(/^CARD\s*\d+/i)) {
+                        parsingExtraTasks = false;
+                    } else if (line.startsWith('-') || line.startsWith('*')) {
+                        const content = line.substring(1).trim();
+                        const cleaned = cleanMarkdownAndEmojis(content);
+                        if (cleaned && cleaned !== '-' && cleaned !== '*') {
+                            extraTasksTextList.push(cleaned);
+                        }
+                    }
+                    return;
+                }
 
                 // Detect card indicator like "📌 CARD 01"
                 if (line.match(/📌\s*CARD/i) || line.match(/^CARD\s*\d+/i)) {
@@ -408,22 +433,32 @@ Total Testados: 2
                         task: '',
                         employee: testerNameInput.value || 'Testador não informado',
                         date: today,
+                        server: 'Não informado',
                         status: 'Aprovado',
                         note: ''
                     };
                     return;
                 }
 
-                // If we hit metadata/summary section, stop reading cards
-                if (line.toLowerCase().includes('resultados do dia') || line.toLowerCase().includes('tarefas extras testadas')) {
+                // If we hit metadata/summary section, stop reading cards but maybe read extras
+                if (line.toLowerCase().includes('resultados do dia')) {
                     if (currentTask && currentTask.id) {
                         tasks.push(currentTask);
                         currentTask = null;
                     }
                     return;
                 }
+                
+                if (line.toLowerCase().includes('tarefas extras testadas') || line.toLowerCase().includes('tarefas extras')) {
+                    if (currentTask && currentTask.id) {
+                        tasks.push(currentTask);
+                        currentTask = null;
+                    }
+                    parsingExtraTasks = true;
+                    return;
+                }
 
-                if (!currentTask) {
+                if (!currentTask && !parsingExtraTasks) {
                     // Try to initialize a task if fields appear before any 📌 CARD marker
                     if (line.toLowerCase().startsWith('nome do card:') || line.toLowerCase().startsWith('id do card:')) {
                         currentTask = {
@@ -431,6 +466,7 @@ Total Testados: 2
                             task: '',
                             employee: testerNameInput.value || 'Testador não informado',
                             date: today,
+                            server: 'Não informado',
                             status: 'Aprovado',
                             note: ''
                         };
@@ -438,6 +474,8 @@ Total Testados: 2
                         return;
                     }
                 }
+                
+                if (!currentTask) return;
 
                 const lower = line.toLowerCase();
                 if (lower.startsWith('nome do card:') || lower.startsWith('nome:')) {
@@ -447,15 +485,12 @@ Total Testados: 2
                     const idMatch = idVal.match(/#\d+/);
                     currentTask.id = idMatch ? idMatch[0] : cleanMarkdownAndEmojis(idVal);
                 } else if (lower.startsWith('servidor:')) {
-                    const srv = cleanMarkdownAndEmojis(originalLine.split(/servidor:/i)[1]);
-                    if (srv) {
-                        currentTask.note = currentTask.note ? `Servidor: ${srv} ; ${currentTask.note}` : `Servidor: ${srv}`;
-                    }
+                    currentTask.server = cleanMarkdownAndEmojis(originalLine.split(/servidor:/i)[1]) || 'Não informado';
                 } else if (lower.startsWith('status:')) {
                     const st = originalLine.split(/status:/i)[1].trim();
                     currentTask.status = detectStatus(st) || 'Aprovado';
-                } else if (lower.startsWith('o que foi realizado no teste:') || lower.startsWith('realizado:')) {
-                    const act = cleanMarkdownAndEmojis(originalLine.split(/o que foi realizado no teste:|realizado:/i)[1]);
+                } else if (lower.startsWith('o que foi realizado no teste:') || lower.startsWith('realizado:') || lower.startsWith('observação teste:') || lower.startsWith('observacao teste:')) {
+                    const act = cleanMarkdownAndEmojis(originalLine.split(/o que foi realizado no teste:|realizado:|observação teste:|observacao teste:/i)[1]);
                     if (act) {
                         currentTask.note = currentTask.note ? `${currentTask.note} ; ${act}` : act;
                     }
@@ -465,7 +500,7 @@ Total Testados: 2
             if (currentTask && currentTask.id) {
                 tasks.push(currentTask);
             }
-            return tasks;
+            return { tasks, extraTasksTextList };
         }
 
         // 2. Otherwise, use Line Parser
@@ -594,7 +629,7 @@ Total Testados: 2
             }
         });
 
-        return tasks;
+        return { tasks, extraTasksTextList: [] };
     }
 
     function formatDate(dateString) {
@@ -654,9 +689,12 @@ Total Testados: 2
         const end = endDateInput.value;
 
         // Parse
-        const tasks = parseInputText(rawText);
-        if (tasks.length === 0) {
-            alert("Nenhum caso de teste pôde ser parseado. Por favor insira dados válidos.");
+        const parseResult = parseInputText(rawText);
+        const tasks = Array.isArray(parseResult) ? parseResult : parseResult.tasks;
+        const extraTasksList = (parseResult && parseResult.extraTasksTextList) ? parseResult.extraTasksTextList : [];
+        
+        if (!tasks || tasks.length === 0) {
+            showToast("Nenhum caso de teste pôde ser parseado. Por favor insira dados válidos.", "error");
             return;
         }
 
@@ -666,19 +704,23 @@ Total Testados: 2
         const reproved = tasks.filter(t => t.status === 'Reprovado').length;
         const rate = total > 0 ? Math.round((approved / total) * 100) : 0;
         
+        // Se extraTasks for preenchido via input manualmente usamos ele, senao da listagem
+        const extraTasksCount = extraTasks > 0 ? extraTasks : extraTasksList.length;
+        
         // Calculations rules:
         // nota = (aprovados * 10) + (reprovados * 2) + (extra_tasks * 5)
-        const score = (approved * 10) + (reproved * 2) + (extraTasks * 5);
+        const score = (approved * 10) + (reproved * 2) + (extraTasksCount * 5);
         const feedback = getFeedbackDetails(score);
 
         // Update State
         parsedData = {
             testerName: tester,
-            extraTasks: extraTasks,
+            extraTasks: extraTasksCount,
+            extraTasksList: extraTasksList,
             startDate: start,
             endDate: end,
             tasks: tasks,
-            kpis: { total, approved, reproved, rate, extraTasks },
+            kpis: { total, approved, reproved, rate, extraTasks: extraTasksCount },
             score: score,
             feedback: feedback
         };
@@ -704,7 +746,15 @@ Total Testados: 2
         // Rating panel classes
         ratingPanel.className = `glass-panel rating-panel ${data.feedback.bandClass}`;
         displayTesterName.textContent = data.testerName;
-        displayPeriod.textContent = `${formatDate(data.startDate)} a ${formatDate(data.endDate)}`;
+        let periodText = 'Não informado';
+        if (data.startDate && data.endDate) {
+            periodText = `${formatDate(data.startDate)} a ${formatDate(data.endDate)}`;
+        } else if (data.startDate) {
+            periodText = `A partir de ${formatDate(data.startDate)}`;
+        } else if (data.endDate) {
+            periodText = `Até ${formatDate(data.endDate)}`;
+        }
+        displayPeriod.textContent = periodText;
         displayScore.textContent = data.score;
         displayRatingBadge.textContent = data.feedback.rating;
         displayFeedbackText.textContent = data.feedback.evaluation;
@@ -731,6 +781,7 @@ Total Testados: 2
                 <td>${t.task}</td>
                 <td>${t.employee}</td>
                 <td>${formatDate(t.date)}</td>
+                <td>${t.server || 'Não informado'}</td>
                 <td><span class="status-badge ${badgeClass}"><i data-lucide="${statusIcon}" class="icon-xs"></i> ${t.status}</span></td>
                 <td><span class="note-text">${t.note || ''}</span></td>
             `;
@@ -777,7 +828,15 @@ Total Testados: 2
         docScore.textContent = `${data.score} pts`;
         docRating.textContent = data.feedback.rating;
         docEmitDate.textContent = now.toLocaleDateString('pt-BR');
-        docPeriod.textContent = `${formatDate(data.startDate)} a ${formatDate(data.endDate)}`;
+        let periodText = 'Não informado';
+        if (data.startDate && data.endDate) {
+            periodText = `${formatDate(data.startDate)} a ${formatDate(data.endDate)}`;
+        } else if (data.startDate) {
+            periodText = `A partir de ${formatDate(data.startDate)}`;
+        } else if (data.endDate) {
+            periodText = `Até ${formatDate(data.endDate)}`;
+        }
+        docPeriod.textContent = periodText;
 
         // KPIs
         docKpiTotal.textContent = data.kpis.total;
@@ -801,10 +860,24 @@ Total Testados: 2
                 <td>${t.task}</td>
                 <td>${t.employee}</td>
                 <td>${formatDate(t.date)}</td>
+                <td>${t.server || 'Não informado'}</td>
                 <td style="font-weight: bold; color: ${t.status === 'Aprovado' ? '#047857' : '#b91c1c'};">${t.status}</td>
             `;
             docTableBody.appendChild(tr);
         });
+
+        // Extra Tasks Section
+        docExtraTasksList.innerHTML = '';
+        if (data.extraTasksList && data.extraTasksList.length > 0) {
+            docExtraTasksSection.style.display = 'block';
+            data.extraTasksList.forEach(taskStr => {
+                const li = document.createElement('li');
+                li.textContent = taskStr;
+                docExtraTasksList.appendChild(li);
+            });
+        } else {
+            docExtraTasksSection.style.display = 'none';
+        }
 
         // Status Details list
         docApprovedList.innerHTML = '';
@@ -834,15 +907,24 @@ Total Testados: 2
         }
     }
 
-    // Modal Control
+    // Referência ao previewContent editável
+    const previewContent = document.getElementById('previewContent');
+
+    // Modal Control — abre e carrega o conteúdo no editor
     btnPreviewModal.addEventListener('click', () => {
         populateModalA4();
+        // Copia o HTML do template para o preview editável
+        if (previewContent) {
+            previewContent.innerHTML = pdfTemplateTarget.querySelector('.document-content').innerHTML;
+        }
         previewModal.classList.add('open');
     });
 
     btnCloseModal.addEventListener('click', () => {
         previewModal.classList.remove('open');
     });
+
+
 
     // Close on clicking backdrop
     previewModal.addEventListener('click', (e) => {
@@ -851,30 +933,173 @@ Total Testados: 2
         }
     });
 
-    // Export PDF function
+    // Score Info Modal Control
+    btnHelpScore.addEventListener('click', () => {
+        scoreInfoModal.classList.add('open');
+    });
+
+    btnCloseScoreModal.addEventListener('click', () => {
+        scoreInfoModal.classList.remove('open');
+    });
+
+    scoreInfoModal.addEventListener('click', (e) => {
+        if (e.target === scoreInfoModal) {
+            scoreInfoModal.classList.remove('open');
+        }
+    });
+
+    // =========================================================================
+    // 🖨️ PDF Export — html2pdf com overlay de loading (sem nova aba, sem flash)
+    // =========================================================================
     function downloadPDFReport() {
-        populateModalA4(); // Ensure populated
-        
-        const opt = {
-            margin: 0,
-            filename: `esocial-review-devs-${parsedData.testerName.replace(/\s+/g, '-').toLowerCase()}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { 
-                scale: 2.5, 
-                useCORS: true,
-                letterRendering: true,
-                backgroundColor: '#ffffff'
-            },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        populateModalA4();
+
+        const today = new Date();
+        const day   = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const year  = today.getFullYear();
+        const filename = `Tarefas Testadas - ( ${parsedData.testerName} ) - ${day}-${month}-${year}.pdf`;
+
+        // ── 1. Mostra overlay de carregamento totalmente sólido ──
+        const loadStyle = document.createElement('style');
+        loadStyle.id = 'pdfLoadStyle';
+        loadStyle.textContent = `
+            @keyframes pdfSpin { to { transform: rotate(360deg); } }
+            #pdfLoadingOverlay {
+                position:fixed;inset:0;z-index:999999;
+                background:#0a100f; /* 100% sólido */
+                display:flex;flex-direction:column;
+                align-items:center;justify-content:center;gap:18px;
+            }
+            #pdfLoadingOverlay .spinner {
+                width:52px;height:52px;border-radius:50%;
+                border:3px solid rgba(156,206,195,0.15);
+                border-top-color:#9ccec3;
+                animation:pdfSpin 0.75s linear infinite;
+            }
+            #pdfLoadingOverlay p {
+                color:#e3f2ef;font-family:'Inter',sans-serif;
+                font-size:15px;font-weight:500;letter-spacing:.02em;
+            }
+        `;
+        document.head.appendChild(loadStyle);
+
+        const loadingEl = document.createElement('div');
+        loadingEl.id = 'pdfLoadingOverlay';
+        loadingEl.innerHTML = `<div class="spinner"></div><p>Gerando PDF…</p>`;
+        document.body.appendChild(loadingEl);
+
+        const cleanup = () => {
+            loadingEl.remove();
+            loadStyle.remove();
         };
 
-        // Create a clone of the target print template in a hidden container to make it clean
-        const element = pdfTemplateTarget;
-        
-        // Execute download
-        html2pdf().set(opt).from(element).save();
+        // ── 2. Envia a estrutura HTML já preenchida para o servidor Node.js ──
+        fetch('/api/generate-pdf', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                htmlContent: pdfTemplateTarget.innerHTML
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => { throw new Error(text); });
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            // Cria um link temporário para download do blob binário do PDF
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            cleanup();
+        })
+        .catch(err => {
+            console.error('PDF Server error:', err);
+            showToast('Erro ao gerar PDF: ' + err.message, 'error');
+            cleanup();
+        });
     }
 
+    // Botão principal (dashboard) — usa o template oculto (sem edição)
     btnDownloadPDF.addEventListener('click', downloadPDFReport);
-    btnModalDownload.addEventListener('click', downloadPDFReport);
+
+    // Botão do modal — usa o previewContent editável (com quebras inseridas pelo usuário)
+    btnModalDownload.addEventListener('click', () => {
+        const today = new Date();
+        const day   = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const year  = today.getFullYear();
+        const filename = `Tarefas Testadas - ( ${parsedData.testerName} ) - ${day}-${month}-${year}.pdf`;
+
+        // Overlay de carregamento
+        const loadStyle = document.createElement('style');
+        loadStyle.id = 'pdfLoadStyleModal';
+        loadStyle.textContent = `
+            @keyframes pdfSpinM { to { transform: rotate(360deg); } }
+            #pdfLoadingOverlayModal {
+                position:fixed;inset:0;z-index:9999999;
+                background:#0a100f;
+                display:flex;flex-direction:column;
+                align-items:center;justify-content:center;gap:18px;
+            }
+            #pdfLoadingOverlayModal .spinner {
+                width:52px;height:52px;border-radius:50%;
+                border:3px solid rgba(156,206,195,0.15);
+                border-top-color:#9ccec3;
+                animation:pdfSpinM 0.75s linear infinite;
+            }
+            #pdfLoadingOverlayModal p {
+                color:#e3f2ef;font-family:'Inter',sans-serif;
+                font-size:15px;font-weight:500;letter-spacing:.02em;
+            }
+        `;
+        document.head.appendChild(loadStyle);
+        const loadingEl = document.createElement('div');
+        loadingEl.id = 'pdfLoadingOverlayModal';
+        loadingEl.innerHTML = `<div class="spinner"></div><p>Gerando PDF…</p>`;
+        document.body.appendChild(loadingEl);
+
+        const cleanupModal = () => {
+            loadingEl.remove();
+            loadStyle.remove();
+        };
+
+        // Pega o HTML do preview editável (com os marcadores de quebra de página do usuário)
+        const htmlToSend = previewContent.innerHTML;
+
+        fetch('/api/generate-pdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ htmlContent: htmlToSend })
+        })
+        .then(response => {
+            if (!response.ok) return response.text().then(t => { throw new Error(t); });
+            return response.blob();
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            cleanupModal();
+        })
+        .catch(err => {
+            console.error('PDF Modal error:', err);
+            showToast('Erro ao gerar PDF: ' + err.message, 'error');
+            cleanupModal();
+        });
+    });
 });

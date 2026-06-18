@@ -1,0 +1,14 @@
+{
+  "name": "relatorio-testes-qa",
+  "version": "1.0.0",
+  "description": "eSocial Brasil Review devs - Gerador de Relatórios de Testes",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "puppeteer": "^22.10.0"
+  },
+  "private": true
+}
