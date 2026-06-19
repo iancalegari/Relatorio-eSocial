@@ -20,9 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
-        
+
         const iconName = type === 'error' ? 'alert-triangle' : 'info';
-        
+
         toast.innerHTML = `
             <div class="toast-icon">
                 <i data-lucide="${iconName}"></i>
@@ -35,15 +35,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 <i data-lucide="x" class="icon-xs"></i>
             </button>
         `;
-        
+
         container.appendChild(toast);
-        
+
         if (window.lucide) {
             window.lucide.createIcons({ root: toast });
         }
-        
+
         const closeBtn = toast.querySelector('.toast-close');
-        
+
         const removeToast = () => {
             toast.classList.add('closing');
             setTimeout(() => {
@@ -52,9 +52,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }, 300);
         };
-        
+
         closeBtn.addEventListener('click', removeToast);
-        
+
         // Auto remove after 5 seconds
         setTimeout(removeToast, 5000);
     }
@@ -161,8 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================================================
     // 📝 Templates & Character Counts
     // ==========================================================================
-    const txtTemplate = 
-`📌 CARD 01
+    const txtTemplate =
+        `📌 CARD 01
 
 Nome do card: 
 ID do card: 
@@ -227,7 +227,7 @@ Total Testados:
 
     // Drag and Drop on Textarea Container
     const container = document.querySelector('.textarea-container');
-    
+
     container.addEventListener('dragover', (e) => {
         e.preventDefault();
         dragDropOverlay.classList.add('active');
@@ -270,7 +270,7 @@ Total Testados:
         fileInput.value = '';
         rawInput.value = '';
         charCount.textContent = '0 caracteres';
-        
+
         fileUploadBox.classList.remove('uploaded');
         const uploadInner = fileUploadBox.querySelector('.upload-inner');
         if (uploadInner) {
@@ -292,11 +292,11 @@ Total Testados:
         }
 
         const reader = new FileReader();
-        reader.onload = function(evt) {
+        reader.onload = function (evt) {
             const fileContent = evt.target.result;
             rawInput.value = fileContent;
             charCount.textContent = `${fileContent.length} caracteres`;
-            
+
             // Visual Feedback in File Upload Box
             fileUploadBox.classList.add('uploaded');
             const uploadInner = fileUploadBox.querySelector('.upload-inner');
@@ -327,11 +327,11 @@ Total Testados:
             }
 
             showToast(`Arquivo "${file.name}" carregado com sucesso!`, "success");
-            
+
             // Reset input value to allow uploading the same file again if needed
             fileInput.value = '';
         };
-        reader.onerror = function() {
+        reader.onerror = function () {
             showToast("Erro ao ler o arquivo. Tente novamente.", "error");
         };
         reader.readAsText(file);
@@ -356,18 +356,18 @@ Total Testados:
     function detectStatus(text) {
         if (!text) return null;
         const lower = text.toLowerCase();
-        
+
         const reprovedSynonyms = [
-            'reprovado', 'não aprovado', 'recusado', 'indeferido', 
-            'desclassificado', 'inapto', 'não qualificado', 'eliminado', 
-            'rejeitado', 'não aceito', 'insuficiente', 'fail', 'falhou', 
+            'reprovado', 'não aprovado', 'recusado', 'indeferido',
+            'desclassificado', 'inapto', 'não qualificado', 'eliminado',
+            'rejeitado', 'não aceito', 'insuficiente', 'fail', 'falhou',
             'erro', 'falha', 'negado'
         ];
-        
+
         const approvedSynonyms = [
-            'aprovado', 'aceito', 'aprovado com êxito', 'homologado', 
-            'validado', 'qualificado', 'admitido', 'deferido', 
-            'satisfatório', 'confirmado', 'aceito oficialmente', 'pass', 
+            'aprovado', 'aceito', 'aprovado com êxito', 'homologado',
+            'validado', 'qualificado', 'admitido', 'deferido',
+            'satisfatório', 'confirmado', 'aceito oficialmente', 'pass',
             'sucesso', 'ok'
         ];
 
@@ -448,7 +448,7 @@ Total Testados:
                     }
                     return;
                 }
-                
+
                 if (line.toLowerCase().includes('tarefas extras testadas') || line.toLowerCase().includes('tarefas extras')) {
                     if (currentTask && currentTask.id) {
                         tasks.push(currentTask);
@@ -474,7 +474,7 @@ Total Testados:
                         return;
                     }
                 }
-                
+
                 if (!currentTask) return;
 
                 const lower = line.toLowerCase();
@@ -576,7 +576,7 @@ Total Testados:
                 }
 
                 tasks.push({
-                    id: id || `#${Math.floor(1000 + Math.random()*9000)}`,
+                    id: id || `#${Math.floor(1000 + Math.random() * 9000)}`,
                     task: task || 'Tarefa de Teste',
                     employee: employee || testerNameInput.value || 'Testador não informado',
                     date: date,
@@ -603,10 +603,10 @@ Total Testados:
                 // Normal fallback parsing
                 const idMatch = line.match(/#\d+/);
                 const dateMatch = line.match(/\b\d{2}[/-]\d{2}[/-]\d{4}\b/);
-                
-                let id = idMatch ? idMatch[0] : `#${Math.floor(1000 + Math.random()*9000)}`;
+
+                let id = idMatch ? idMatch[0] : `#${Math.floor(1000 + Math.random() * 9000)}`;
                 const date = dateMatch ? dateMatch[0] : today;
-                
+
                 // Detect status from the cleaned text or original line
                 let status = detectStatus(originalLine) || 'Aprovado';
 
@@ -641,7 +641,7 @@ Total Testados:
             if (parts.length === 3) {
                 return `${parts[2]}/${parts[1]}/${parts[0]}`;
             }
-        } catch(e) {}
+        } catch (e) { }
         return dateString;
     }
 
@@ -692,7 +692,7 @@ Total Testados:
         const parseResult = parseInputText(rawText);
         const tasks = Array.isArray(parseResult) ? parseResult : parseResult.tasks;
         const extraTasksList = (parseResult && parseResult.extraTasksTextList) ? parseResult.extraTasksTextList : [];
-        
+
         if (!tasks || tasks.length === 0) {
             showToast("Nenhum caso de teste pôde ser parseado. Por favor insira dados válidos.", "error");
             return;
@@ -703,10 +703,10 @@ Total Testados:
         const approved = tasks.filter(t => t.status === 'Aprovado').length;
         const reproved = tasks.filter(t => t.status === 'Reprovado').length;
         const rate = total > 0 ? Math.round((approved / total) * 100) : 0;
-        
+
         // Se extraTasks for preenchido via input manualmente usamos ele, senao da listagem
         const extraTasksCount = extraTasks > 0 ? extraTasks : extraTasksList.length;
-        
+
         // Calculations rules:
         // nota = (aprovados * 10) + (reprovados * 2) + (extra_tasks * 5)
         const score = (approved * 10) + (reproved * 2) + (extraTasksCount * 5);
@@ -731,7 +731,7 @@ Total Testados:
 
     function renderDashboard() {
         const data = parsedData;
-        
+
         // Set generation metadata
         const now = new Date();
         generationTime.textContent = `Gerado em: ${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR')}`;
@@ -772,10 +772,10 @@ Total Testados:
         data.tasks.forEach(t => {
             // Execution Table Row
             const row = document.createElement('tr');
-            
+
             const badgeClass = t.status === 'Aprovado' ? 'aprovado' : 'reprovado';
             const statusIcon = t.status === 'Aprovado' ? 'check' : 'alert-circle';
-            
+
             row.innerHTML = `
                 <td><strong>${t.id}</strong></td>
                 <td>${t.task}</td>
@@ -995,7 +995,7 @@ Total Testados:
                     canvas.getContext('2d').drawImage(img, 0, 0);
                     try {
                         if (logoImg) logoImg.src = canvas.toDataURL('image/png');
-                    } catch(e) { /* ignora erros de CORS */ }
+                    } catch (e) { /* ignora erros de CORS */ }
                     runHtml2Pdf(element, filename, cleanup);
                 };
                 img.onerror = () => runHtml2Pdf(element, filename, cleanup);
@@ -1009,10 +1009,10 @@ Total Testados:
 
     function runHtml2Pdf(element, filename, cleanup) {
         const opt = {
-            margin:       [15, 15, 15, 15],
-            filename:     filename,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  {
+            margin: [15, 15, 15, 15],
+            filename: filename,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
                 scale: 2,
                 useCORS: true,
                 logging: false,
@@ -1026,7 +1026,7 @@ Total Testados:
         const clone = element.cloneNode(true);
         clone.style.cssText = [
             'position:fixed',
-            'left:-9999px',
+            'left:-1200px',
             'top:0',
             'width:794px',
             'background:#ffffff',
@@ -1054,9 +1054,9 @@ Total Testados:
         populateModalA4();
 
         const today = new Date();
-        const day   = String(today.getDate()).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
         const month = String(today.getMonth() + 1).padStart(2, '0');
-        const year  = today.getFullYear();
+        const year = today.getFullYear();
         const filename = `Tarefas Testadas - ( ${parsedData.testerName} ) - ${day}-${month}-${year}.pdf`;
 
         const cleanup = buildPdfOverlay('pdfLoadingOverlay', 'pdfLoadStyle', 'pdfSpin');
@@ -1069,9 +1069,9 @@ Total Testados:
     // Botão do modal — usa o previewContent editável (com quebras inseridas pelo usuário)
     btnModalDownload.addEventListener('click', () => {
         const today = new Date();
-        const day   = String(today.getDate()).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
         const month = String(today.getMonth() + 1).padStart(2, '0');
-        const year  = today.getFullYear();
+        const year = today.getFullYear();
         const filename = `Tarefas Testadas - ( ${parsedData.testerName} ) - ${day}-${month}-${year}.pdf`;
 
         const cleanupModal = buildPdfOverlay('pdfLoadingOverlayModal', 'pdfLoadStyleModal', 'pdfSpinM');
