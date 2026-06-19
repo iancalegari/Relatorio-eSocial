@@ -164,19 +164,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const txtTemplate =
         `📌 CARD 01
 
-Nome do card: 
-ID do card: 
-Servidor: 
-Status: (APROVADO / NEGADO)
-Observação teste: 
+Nome do card: asd
+ID do card: asd
+Servidor: ads
+Status: (APROVADO / NEGADO) a
+Observação teste: ads
 
 📌 CARD 02
 
-Nome do card: 
-ID do card: 
-Servidor: 
-Status: (APROVADO / NEGADO)
-Observação teste: 
+Nome do card: asd
+ID do card: sda
+Servidor: asd
+Status: (APROVADO / NEGADO)asd
+Observação teste: asd
 
 📊 RESULTADOS DO DIA
 Aprovados: 
@@ -924,8 +924,6 @@ Total Testados:
         previewModal.classList.remove('open');
     });
 
-
-
     // Close on clicking backdrop
     previewModal.addEventListener('click', (e) => {
         if (e.target === previewModal) {
@@ -949,132 +947,248 @@ Total Testados:
     });
 
     // =========================================================================
-    // 🖨️ PDF Export — html2pdf client-side (funciona no GitHub Pages)
+    // 🖨️ PDF Export — Native print in new tab (window.print)
     // =========================================================================
-    function buildPdfOverlay(idOverlay, idStyle, spinKeyframe) {
-        const loadStyle = document.createElement('style');
-        loadStyle.id = idStyle;
-        loadStyle.textContent = `
-            @keyframes ${spinKeyframe} { to { transform: rotate(360deg); } }
-            #${idOverlay} {
-                position:fixed;inset:0;z-index:999999;
-                background:#0a100f;
-                display:flex;flex-direction:column;
-                align-items:center;justify-content:center;gap:18px;
-            }
-            #${idOverlay} .spinner {
-                width:52px;height:52px;border-radius:50%;
-                border:3px solid rgba(156,206,195,0.15);
-                border-top-color:#9ccec3;
-                animation:${spinKeyframe} 0.75s linear infinite;
-            }
-            #${idOverlay} p {
-                color:#e3f2ef;font-family:'Inter',sans-serif;
-                font-size:15px;font-weight:500;letter-spacing:.02em;
-            }
-        `;
-        document.head.appendChild(loadStyle);
-        const loadingEl = document.createElement('div');
-        loadingEl.id = idOverlay;
-        loadingEl.innerHTML = `<div class="spinner"></div><p>Gerando PDF…</p>`;
-        document.body.appendChild(loadingEl);
-        return () => { loadingEl.remove(); loadStyle.remove(); };
+    function generatePdfPrint(sourceElement) {
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const year = today.getFullYear();
+        const filename = `Tarefas Testadas - ( ${parsedData.testerName} ) - ${day}-${month}-${year}`;
+
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            showToast('Por favor, permita pop-ups para visualizar a impressão.', 'error');
+            return;
+        }
+
+        // Capture the fully-rendered inner HTML from the live DOM element
+        const contentHtml = sourceElement.querySelector('.document-content').innerHTML;
+
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html lang="pt-BR">
+            <head>
+                <meta charset="UTF-8">
+                <title>${filename}</title>
+                <link rel="preconnect" href="https://fonts.googleapis.com">
+                <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+                <style>
+                    /* ── Base layout ──────────────────────────────────────────── */
+                    *, *::before, *::after { box-sizing: border-box; }
+                    body {
+                        background: #0d0b1a;
+                        margin: 0;
+                        padding: 0;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        font-family: 'Inter', Arial, sans-serif;
+                        min-height: 100vh;
+                    }
+
+                    /* ── Sticky header bar (hidden on print) ─────────────────── */
+                    .print-header {
+                        background: #100d23;
+                        border-bottom: 1px solid rgba(156,206,195,.15);
+                        padding: 14px 24px;
+                        width: 100%;
+                        position: sticky;
+                        top: 0;
+                        z-index: 1000;
+                        box-shadow: 0 4px 20px rgba(0,0,0,.3);
+                    }
+                    .print-header-content {
+                        max-width: 1200px;
+                        margin: 0 auto;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    }
+                    .print-title {
+                        color: #fff;
+                        font-family: 'Outfit', sans-serif;
+                        font-size: 16px;
+                        font-weight: 600;
+                    }
+                    .btn-print {
+                        background: linear-gradient(135deg,#9ccec3 0%,#7dbba9 100%);
+                        border: 1px solid rgba(255,255,255,.15);
+                        color: #0a100f;
+                        padding: 10px 20px;
+                        border-radius: 8px;
+                        font-weight: 700;
+                        font-family: 'Outfit', sans-serif;
+                        font-size: 14px;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        cursor: pointer;
+                        transition: all .2s ease;
+                        box-shadow: 0 4px 15px rgba(156,206,195,.25);
+                    }
+                    .btn-print:hover {
+                        transform: translateY(-1px);
+                        box-shadow: 0 6px 20px rgba(156,206,195,.4);
+                        filter: brightness(1.05);
+                    }
+
+                    /* ── A4 wrapper (screen preview) ─────────────────────────── */
+                    .a4-page-wrapper {
+                        width: 210mm;
+                        min-height: 297mm;
+                        padding: 20mm;
+                        background: #ffffff;
+                        color: #1f2937;
+                        font-family: Arial, sans-serif;
+                        font-size: 12px;
+                        line-height: 1.5;
+                        box-shadow: 0 10px 30px rgba(0,0,0,.5);
+                        border: 1px solid rgba(255,255,255,.05);
+                        margin: 40px auto;
+                    }
+                    .document-content {
+                        display: flex;
+                        flex-direction: column;
+                        min-height: calc(297mm - 40mm);
+                    }
+
+                    /* ── Document component styles (fully inlined) ───────────── */
+                    :root { --secondary: #2563eb; }
+                    .doc-header-top { display:flex; justify-content:space-between; align-items:center; }
+                    .doc-logo-area  { display:flex; align-items:center; gap:8px; }
+                    .doc-logo       { max-height:40px; width:auto; }
+                    .doc-logo-title { font-size:16px; font-weight:700; }
+                    .doc-meta-badge { background:#f3f4f6; color:#4b5563; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:700; letter-spacing:.5px; }
+                    .doc-header-divider { height:2px; background:#e5e7eb; margin:12px 0; }
+
+                    .doc-metadata-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:20px; }
+                    .doc-meta-item { display:flex; flex-direction:column; }
+                    .doc-meta-item .lbl { font-size:9px; color:#6b7280; font-weight:700; margin-bottom:2px; }
+                    .doc-meta-item .val { font-size:11px; color:#1f2937; font-weight:600; }
+
+                    .doc-section-title { background:#f8fafc; border-left:3px solid #2563eb; color:#2563eb; padding:6px 10px; font-size:11px; font-weight:700; margin-top:16px; margin-bottom:12px; text-transform:uppercase; }
+
+                    .doc-kpis    { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:16px; }
+                    .doc-kpi-box { background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px; padding:10px; text-align:center; display:flex; flex-direction:column; justify-content:center; }
+                    .doc-kpi-val { font-size:20px; font-weight:700; color:#111827; }
+                    .doc-kpi-lbl { font-size:9px; color:#6b7280; font-weight:500; margin-top:2px; }
+
+                    .doc-feedback-card   { border:1px solid #e5e7eb; border-radius:6px; padding:12px; margin-bottom:16px; display:flex; gap:16px; background:#ffffff; }
+                    .doc-feedback-badge  { align-self:flex-start; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:700; white-space:nowrap; text-transform:uppercase; }
+                    .doc-band-red        { border-left:4px solid #ef4444; }
+                    .doc-band-red    .doc-feedback-badge { background:#fee2e2; color:#b91c1c; }
+                    .doc-band-orange     { border-left:4px solid #f59e0b; }
+                    .doc-band-orange .doc-feedback-badge { background:#fef3c7; color:#b45309; }
+                    .doc-band-yellow     { border-left:4px solid #eab308; }
+                    .doc-band-yellow .doc-feedback-badge { background:#fef9c3; color:#854d0e; }
+                    .doc-band-green      { border-left:4px solid #10b981; }
+                    .doc-band-green  .doc-feedback-badge { background:#d1fae5; color:#047857; }
+                    .doc-feedback-body         { display:flex; flex-direction:column; gap:6px; }
+                    .doc-feedback-body .doc-desc { font-size:11px; color:#374151; }
+                    .doc-recs-box              { font-size:10px; color:#4b5563; border-top:1px solid #f3f4f6; padding-top:6px; }
+                    .doc-recs-box strong       { color:#1f2937; }
+
+                    .doc-table    { width:100% !important; border-collapse:collapse !important; font-size:10px !important; margin-bottom:16px !important; background:#ffffff !important; color:#1f2937 !important; }
+                    .doc-table tr { background:#ffffff !important; }
+                    .doc-table th { background:#f3f4f6 !important; color:#374151 !important; font-weight:700 !important; padding:6px 10px !important; border-bottom:2px solid #d1d5db !important; text-align:left !important; }
+                    .doc-table td { padding:6px 10px !important; border-bottom:1px solid #e5e7eb !important; color:#4b5563 !important; background:#ffffff !important; }
+
+                    .doc-breakdown-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
+                    .doc-breakdown-col  { border:1px solid #e5e7eb; border-radius:6px; padding:10px; min-height:120px; background:#ffffff; }
+                    .doc-breakdown-col .col-hdr { font-size:10px; font-weight:700; border-bottom:1px solid #f3f4f6; padding-bottom:4px; margin-bottom:8px; text-transform:uppercase; }
+
+                    .doc-list        { list-style:none; padding:0; margin:0; font-size:9.5px; display:flex; flex-direction:column; gap:6px; }
+                    .doc-list li     { padding-left:8px; position:relative; color:#4b5563; }
+                    .doc-list li::before           { content:"•"; position:absolute; left:0; font-weight:bold; }
+                    .doc-list.text-success li::before { color:#10b981; }
+                    .doc-list.text-danger  li::before { color:#ef4444; }
+
+                    .doc-footer { margin-top:auto; padding-top:12px; border-top:1px solid #e5e7eb; display:flex; justify-content:space-between; font-size:9px; color:#9ca3af; }
+
+                    /* ── Page-break marker (screen) ──────────────────────────── */
+                    .pdf-page-break-marker {
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        margin: 16px 0;
+                        border-top: 2px dashed #9ccec3;
+                        padding-top: 4px;
+                        font-size: 10px;
+                        color: #9ccec3;
+                        user-select: none;
+                    }
+
+                    /* ── Print overrides ─────────────────────────────────────── */
+                    @media print {
+                        body {
+                            background: #ffffff !important;
+                            padding: 0 !important;
+                            margin: 0 !important;
+                        }
+                        .no-print { display: none !important; }
+                        .a4-page-wrapper {
+                            box-shadow: none !important;
+                            border: none !important;
+                            width: 100% !important;
+                            margin: 0 !important;
+                            padding: 20mm !important;
+                        }
+                        .pdf-page-break-marker {
+                            border: none !important;
+                            background: none !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            height: 0 !important;
+                            overflow: hidden !important;
+                            font-size: 0 !important;
+                            page-break-before: always !important;
+                            break-before: page !important;
+                        }
+                        .pdf-page-break-marker * { display: none !important; }
+                        .doc-section-container,
+                        .doc-breakdown-col,
+                        .doc-feedback-card,
+                        .doc-kpis,
+                        tr {
+                            page-break-inside: avoid !important;
+                            break-inside: avoid !important;
+                        }
+                        @page { size: A4 portrait; margin: 0; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="print-header no-print">
+                    <div class="print-header-content">
+                        <span class="print-title">Visualização de Impressão — ${filename}</span>
+                        <button class="btn-print" onclick="window.print()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                            Fazer download do PDF
+                        </button>
+                    </div>
+                </div>
+                <div class="a4-page-wrapper">
+                    <div class="document-content">
+                        ${contentHtml}
+                    </div>
+                </div>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
     }
 
-    function generatePdfFromElement(element, filename, cleanup) {
-        // Converte a imagem da logo para base64 para evitar problemas de CORS no html2pdf
-        const logoImg = element.querySelector('img[src="logopdf.png"]');
-        const convertLogoThenGenerate = (logoSrc) => {
-            if (logoSrc) {
-                const canvas = document.createElement('canvas');
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                img.onload = () => {
-                    canvas.width = img.naturalWidth;
-                    canvas.height = img.naturalHeight;
-                    canvas.getContext('2d').drawImage(img, 0, 0);
-                    try {
-                        if (logoImg) logoImg.src = canvas.toDataURL('image/png');
-                    } catch (e) { /* ignora erros de CORS */ }
-                    runHtml2Pdf(element, filename, cleanup);
-                };
-                img.onerror = () => runHtml2Pdf(element, filename, cleanup);
-                img.src = logoSrc + '?_=' + Date.now();
-            } else {
-                runHtml2Pdf(element, filename, cleanup);
-            }
-        };
-        convertLogoThenGenerate(logoImg ? 'logopdf.png' : null);
-    }
-
-    function runHtml2Pdf(element, filename, cleanup) {
-        const opt = {
-            margin: [15, 15, 15, 15],
-            filename: filename,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                backgroundColor: '#ffffff'
-            },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-        };
-
-        // Cria um clone visível temporário para o html2pdf renderizar corretamente
-        const clone = element.cloneNode(true);
-        clone.style.cssText = [
-            'position:fixed',
-            'left:-1200px',
-            'top:0',
-            'width:794px',
-            'background:#ffffff',
-            'color:#1f2937',
-            'font-family:Inter,sans-serif',
-            'padding:20px',
-            'z-index:-1'
-        ].join(';');
-        document.body.appendChild(clone);
-
-        html2pdf().set(opt).from(clone).save()
-            .then(() => {
-                document.body.removeChild(clone);
-                cleanup();
-            })
-            .catch(err => {
-                console.error('html2pdf error:', err);
-                document.body.removeChild(clone);
-                showToast('Erro ao gerar PDF: ' + err.message, 'error');
-                cleanup();
-            });
-    }
-
-    function downloadPDFReport() {
+    // Botão principal de download (dashboard)
+    btnDownloadPDF.addEventListener('click', () => {
         populateModalA4();
+        generatePdfPrint(pdfTemplateTarget);
+    });
 
-        const today = new Date();
-        const day = String(today.getDate()).padStart(2, '0');
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const year = today.getFullYear();
-        const filename = `Tarefas Testadas - ( ${parsedData.testerName} ) - ${day}-${month}-${year}.pdf`;
-
-        const cleanup = buildPdfOverlay('pdfLoadingOverlay', 'pdfLoadStyle', 'pdfSpin');
-        generatePdfFromElement(pdfTemplateTarget.querySelector('.document-content'), filename, cleanup);
-    }
-
-    // Botão principal (dashboard) — usa o template oculto (sem edição)
-    btnDownloadPDF.addEventListener('click', downloadPDFReport);
-
-    // Botão do modal — usa o previewContent editável (com quebras inseridas pelo usuário)
+    // Botão do modal — gera preview de impressão e fecha o modal
     btnModalDownload.addEventListener('click', () => {
-        const today = new Date();
-        const day = String(today.getDate()).padStart(2, '0');
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const year = today.getFullYear();
-        const filename = `Tarefas Testadas - ( ${parsedData.testerName} ) - ${day}-${month}-${year}.pdf`;
-
-        const cleanupModal = buildPdfOverlay('pdfLoadingOverlayModal', 'pdfLoadStyleModal', 'pdfSpinM');
-        generatePdfFromElement(previewContent, filename, cleanupModal);
+        generatePdfPrint(pdfTemplateTarget);
+        previewModal.classList.remove('open');
     });
 });
