@@ -949,8 +949,107 @@ Total Testados:
     });
 
     // =========================================================================
-    // 🖨️ PDF Export — html2pdf com overlay de loading (sem nova aba, sem flash)
+    // 🖨️ PDF Export — html2pdf client-side (funciona no GitHub Pages)
     // =========================================================================
+    function buildPdfOverlay(idOverlay, idStyle, spinKeyframe) {
+        const loadStyle = document.createElement('style');
+        loadStyle.id = idStyle;
+        loadStyle.textContent = `
+            @keyframes ${spinKeyframe} { to { transform: rotate(360deg); } }
+            #${idOverlay} {
+                position:fixed;inset:0;z-index:999999;
+                background:#0a100f;
+                display:flex;flex-direction:column;
+                align-items:center;justify-content:center;gap:18px;
+            }
+            #${idOverlay} .spinner {
+                width:52px;height:52px;border-radius:50%;
+                border:3px solid rgba(156,206,195,0.15);
+                border-top-color:#9ccec3;
+                animation:${spinKeyframe} 0.75s linear infinite;
+            }
+            #${idOverlay} p {
+                color:#e3f2ef;font-family:'Inter',sans-serif;
+                font-size:15px;font-weight:500;letter-spacing:.02em;
+            }
+        `;
+        document.head.appendChild(loadStyle);
+        const loadingEl = document.createElement('div');
+        loadingEl.id = idOverlay;
+        loadingEl.innerHTML = `<div class="spinner"></div><p>Gerando PDF…</p>`;
+        document.body.appendChild(loadingEl);
+        return () => { loadingEl.remove(); loadStyle.remove(); };
+    }
+
+    function generatePdfFromElement(element, filename, cleanup) {
+        // Converte a imagem da logo para base64 para evitar problemas de CORS no html2pdf
+        const logoImg = element.querySelector('img[src="logopdf.png"]');
+        const convertLogoThenGenerate = (logoSrc) => {
+            if (logoSrc) {
+                const canvas = document.createElement('canvas');
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
+                    canvas.getContext('2d').drawImage(img, 0, 0);
+                    try {
+                        if (logoImg) logoImg.src = canvas.toDataURL('image/png');
+                    } catch(e) { /* ignora erros de CORS */ }
+                    runHtml2Pdf(element, filename, cleanup);
+                };
+                img.onerror = () => runHtml2Pdf(element, filename, cleanup);
+                img.src = logoSrc + '?_=' + Date.now();
+            } else {
+                runHtml2Pdf(element, filename, cleanup);
+            }
+        };
+        convertLogoThenGenerate(logoImg ? 'logopdf.png' : null);
+    }
+
+    function runHtml2Pdf(element, filename, cleanup) {
+        const opt = {
+            margin:       [15, 15, 15, 15],
+            filename:     filename,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff'
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+
+        // Cria um clone visível temporário para o html2pdf renderizar corretamente
+        const clone = element.cloneNode(true);
+        clone.style.cssText = [
+            'position:fixed',
+            'left:-9999px',
+            'top:0',
+            'width:794px',
+            'background:#ffffff',
+            'color:#1f2937',
+            'font-family:Inter,sans-serif',
+            'padding:20px',
+            'z-index:-1'
+        ].join(';');
+        document.body.appendChild(clone);
+
+        html2pdf().set(opt).from(clone).save()
+            .then(() => {
+                document.body.removeChild(clone);
+                cleanup();
+            })
+            .catch(err => {
+                console.error('html2pdf error:', err);
+                document.body.removeChild(clone);
+                showToast('Erro ao gerar PDF: ' + err.message, 'error');
+                cleanup();
+            });
+    }
+
     function downloadPDFReport() {
         populateModalA4();
 
@@ -960,73 +1059,8 @@ Total Testados:
         const year  = today.getFullYear();
         const filename = `Tarefas Testadas - ( ${parsedData.testerName} ) - ${day}-${month}-${year}.pdf`;
 
-        // ── 1. Mostra overlay de carregamento totalmente sólido ──
-        const loadStyle = document.createElement('style');
-        loadStyle.id = 'pdfLoadStyle';
-        loadStyle.textContent = `
-            @keyframes pdfSpin { to { transform: rotate(360deg); } }
-            #pdfLoadingOverlay {
-                position:fixed;inset:0;z-index:999999;
-                background:#0a100f; /* 100% sólido */
-                display:flex;flex-direction:column;
-                align-items:center;justify-content:center;gap:18px;
-            }
-            #pdfLoadingOverlay .spinner {
-                width:52px;height:52px;border-radius:50%;
-                border:3px solid rgba(156,206,195,0.15);
-                border-top-color:#9ccec3;
-                animation:pdfSpin 0.75s linear infinite;
-            }
-            #pdfLoadingOverlay p {
-                color:#e3f2ef;font-family:'Inter',sans-serif;
-                font-size:15px;font-weight:500;letter-spacing:.02em;
-            }
-        `;
-        document.head.appendChild(loadStyle);
-
-        const loadingEl = document.createElement('div');
-        loadingEl.id = 'pdfLoadingOverlay';
-        loadingEl.innerHTML = `<div class="spinner"></div><p>Gerando PDF…</p>`;
-        document.body.appendChild(loadingEl);
-
-        const cleanup = () => {
-            loadingEl.remove();
-            loadStyle.remove();
-        };
-
-        // ── 2. Envia a estrutura HTML já preenchida para o servidor Node.js ──
-        fetch('/api/generate-pdf', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                htmlContent: pdfTemplateTarget.innerHTML
-            })
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.text().then(text => { throw new Error(text); });
-            }
-            return response.blob();
-        })
-        .then(blob => {
-            // Cria um link temporário para download do blob binário do PDF
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-            cleanup();
-        })
-        .catch(err => {
-            console.error('PDF Server error:', err);
-            showToast('Erro ao gerar PDF: ' + err.message, 'error');
-            cleanup();
-        });
+        const cleanup = buildPdfOverlay('pdfLoadingOverlay', 'pdfLoadStyle', 'pdfSpin');
+        generatePdfFromElement(pdfTemplateTarget.querySelector('.document-content'), filename, cleanup);
     }
 
     // Botão principal (dashboard) — usa o template oculto (sem edição)
@@ -1040,66 +1074,7 @@ Total Testados:
         const year  = today.getFullYear();
         const filename = `Tarefas Testadas - ( ${parsedData.testerName} ) - ${day}-${month}-${year}.pdf`;
 
-        // Overlay de carregamento
-        const loadStyle = document.createElement('style');
-        loadStyle.id = 'pdfLoadStyleModal';
-        loadStyle.textContent = `
-            @keyframes pdfSpinM { to { transform: rotate(360deg); } }
-            #pdfLoadingOverlayModal {
-                position:fixed;inset:0;z-index:9999999;
-                background:#0a100f;
-                display:flex;flex-direction:column;
-                align-items:center;justify-content:center;gap:18px;
-            }
-            #pdfLoadingOverlayModal .spinner {
-                width:52px;height:52px;border-radius:50%;
-                border:3px solid rgba(156,206,195,0.15);
-                border-top-color:#9ccec3;
-                animation:pdfSpinM 0.75s linear infinite;
-            }
-            #pdfLoadingOverlayModal p {
-                color:#e3f2ef;font-family:'Inter',sans-serif;
-                font-size:15px;font-weight:500;letter-spacing:.02em;
-            }
-        `;
-        document.head.appendChild(loadStyle);
-        const loadingEl = document.createElement('div');
-        loadingEl.id = 'pdfLoadingOverlayModal';
-        loadingEl.innerHTML = `<div class="spinner"></div><p>Gerando PDF…</p>`;
-        document.body.appendChild(loadingEl);
-
-        const cleanupModal = () => {
-            loadingEl.remove();
-            loadStyle.remove();
-        };
-
-        // Pega o HTML do preview editável (com os marcadores de quebra de página do usuário)
-        const htmlToSend = previewContent.innerHTML;
-
-        fetch('/api/generate-pdf', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ htmlContent: htmlToSend })
-        })
-        .then(response => {
-            if (!response.ok) return response.text().then(t => { throw new Error(t); });
-            return response.blob();
-        })
-        .then(blob => {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-            cleanupModal();
-        })
-        .catch(err => {
-            console.error('PDF Modal error:', err);
-            showToast('Erro ao gerar PDF: ' + err.message, 'error');
-            cleanupModal();
-        });
+        const cleanupModal = buildPdfOverlay('pdfLoadingOverlayModal', 'pdfLoadStyleModal', 'pdfSpinM');
+        generatePdfFromElement(previewContent, filename, cleanupModal);
     });
 });
