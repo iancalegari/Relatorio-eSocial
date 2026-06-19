@@ -164,19 +164,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const txtTemplate =
         `📌 CARD 01
 
-Nome do card: asd
-ID do card: asd
-Servidor: ads
-Status: (APROVADO / NEGADO) a
-Observação teste: ads
+Nome do card: 
+ID do card: 
+Servidor: 
+Status: (APROVADO / NEGADO) 
+Observação teste: 
 
 📌 CARD 02
 
-Nome do card: asd
-ID do card: sda
-Servidor: asd
-Status: (APROVADO / NEGADO)asd
-Observação teste: asd
+Nome do card: 
+ID do card: 
+Servidor: 
+Status: (APROVADO / NEGADO)
+Observação teste: 
 
 📊 RESULTADOS DO DIA
 Aprovados: 
