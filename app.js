@@ -741,7 +741,8 @@ Total Testados:
             tasks: tasks,
             kpis: { total, approved, reproved, rate, extraTasks: extraTasksCount },
             score: score,
-            feedback: feedback
+            feedback: feedback,
+            rawText: rawText
         };
 
         // Render Dashboard
@@ -1229,16 +1230,18 @@ Total Testados:
     // ==========================================================================
     const HISTORY_KEY = 'reportHistory';
     const HISTORY_EXPIRY_DAYS = 5;
-
     function saveToHistory(data) {
         const now = new Date();
         const dd = String(now.getDate()).padStart(2, '0');
         const mm = String(now.getMonth() + 1).padStart(2, '0');
         const yyyy = now.getFullYear();
+        const hh = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        const sec = String(now.getSeconds()).padStart(2, '0');
         const safeName = (data.testerName || 'Testador')
             .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
             .replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/\s+/g, '_');
-        const fileName = `Relatorio_${safeName}_${dd}-${mm}-${yyyy}`;
+        const fileName = `Relatorio_${safeName}_${dd}-${mm}-${yyyy}_${hh}h${min}m${sec}s`;
 
         const entry = {
             id: `hist_${now.getTime()}`,
@@ -1255,8 +1258,8 @@ Total Testados:
         };
 
         let history = loadHistory();
-        // Remove entrada duplicada do mesmo nome (mesma sessão / mesmo dia)
-        history = history.filter(h => h.fileName !== fileName);
+        // Remove duplicate entry with the exact same raw text content to avoid spamming the same report
+        history = history.filter(h => !h.parsedData || h.parsedData.rawText !== data.rawText);
         history.unshift(entry);
         // Mantém apenas os últimos 5
         if (history.length > 5) history = history.slice(0, 5);
@@ -1308,6 +1311,36 @@ Total Testados:
         return remaining;
     }
 
+    function rebuildRawTextFromTasks(tasks, extraTasksList) {
+        if (!tasks || tasks.length === 0) return "";
+        let text = "";
+        tasks.forEach((t, index) => {
+            const num = String(index + 1).padStart(2, '0');
+            text += `📌 CARD ${num}\n\n`;
+            text += `Nome do card: ${t.task}\n`;
+            text += `ID do card: ${t.id}\n`;
+            text += `Servidor: ${t.server || 'Não informado'}\n`;
+            text += `Status: ${t.status === 'Aprovado' ? 'APROVADO' : 'NEGADO'}\n`;
+            text += `Observação teste: ${t.note || ''}\n\n`;
+        });
+        
+        const approvedCount = tasks.filter(t => t.status === 'Aprovado').length;
+        const reprovedCount = tasks.filter(t => t.status === 'Reprovado').length;
+        
+        text += `📊 RESULTADOS DO DIA\n`;
+        text += `Aprovados: ${approvedCount}\n`;
+        text += `Reprovados: ${reprovedCount}\n`;
+        text += `Total Testados: ${tasks.length}\n\n`;
+        
+        if (extraTasksList && extraTasksList.length > 0) {
+            text += `🧪 TAREFAS EXTRAS TESTADAS\n`;
+            extraTasksList.forEach(et => {
+                text += `- ${et}\n`;
+            });
+        }
+        return text.trim();
+    }
+
     function renderHistoryModal() {
         const history = loadHistory();
         historyTableBody.innerHTML = '';
@@ -1352,6 +1385,9 @@ Total Testados:
                         <button class="btn-hist-download" data-id="${entry.id}" title="Baixar PDF">
                             <i data-lucide="download" class="icon-xs"></i> Baixar
                         </button>
+                        <button class="btn-hist-restore" data-id="${entry.id}" title="Restaurar Relatório">
+                            <i data-lucide="rotate-ccw" class="icon-xs"></i> Restaurar
+                        </button>
                         <button class="btn-hist-delete" data-id="${entry.id}" title="Excluir entrada">
                             <i data-lucide="trash-2" class="icon-xs"></i>
                         </button>
@@ -1374,6 +1410,47 @@ Total Testados:
                     populateModalA4();
                     generatePdfPrint(pdfTemplateTarget);
                     showToast(`Gerando PDF: ${entry.fileName}`, 'info');
+                }
+            });
+        });
+
+        // Bind restore buttons
+        historyTableBody.querySelectorAll('.btn-hist-restore').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.getAttribute('data-id');
+                const entry = loadHistory().find(h => h.id === id);
+                if (entry && entry.parsedData) {
+                    if (entry.parsedData.rawText !== undefined) {
+                        rawInput.value = entry.parsedData.rawText;
+                    } else if (entry.parsedData.tasks) {
+                        // Rebuild text from tasks as fallback
+                        rawInput.value = rebuildRawTextFromTasks(entry.parsedData.tasks, entry.parsedData.extraTasksList);
+                    }
+                    
+                    charCount.textContent = `${rawInput.value.length} caracteres`;
+
+                    if (entry.parsedData.testerName) {
+                        testerNameInput.value = entry.parsedData.testerName;
+                        localStorage.setItem('testerName', entry.parsedData.testerName);
+                    }
+                    if (entry.parsedData.extraTasks !== undefined) {
+                        extraTasksInput.value = entry.parsedData.extraTasks;
+                    }
+                    if (entry.parsedData.startDate) {
+                        startDateInput.value = entry.parsedData.startDate;
+                    }
+                    if (entry.parsedData.endDate !== undefined) {
+                        endDateInput.value = entry.parsedData.endDate;
+                    }
+
+                    // Process restored report to update dashboard
+                    btnProcess.click();
+
+                    // Close history modal
+                    historyModal.classList.remove('open');
+
+                    // Show success toast
+                    showToast('Relatório restaurado com sucesso!', 'success');
                 }
             });
         });

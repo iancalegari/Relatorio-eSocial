@@ -1824,7 +1824,7 @@ body {
 
 /* --- History Modal Styling --- */
 .modal-history {
-    max-width: 950px;
+    max-width: 1150px;
     width: 95%;
     height: 80vh;
 }
@@ -1970,6 +1970,27 @@ body {
     background: var(--primary);
     color: var(--text-inverse);
     border-color: var(--primary);
+}
+
+.btn-hist-restore {
+    background: rgba(108, 108, 183, 0.12);
+    border: 1px solid rgba(108, 108, 183, 0.25);
+    color: #a5b4fc;
+    padding: 6px 12px;
+    border-radius: var(--border-radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition-smooth);
+}
+
+.btn-hist-restore:hover {
+    background: #6c6cb7;
+    color: white;
+    border-color: #6c6cb7;
 }
 
 .btn-hist-delete {
