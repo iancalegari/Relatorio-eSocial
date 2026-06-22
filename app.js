@@ -148,6 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const docKpiExtras = document.getElementById('docKpiExtras');
 
     const docFeedbackCard = document.getElementById('docFeedbackCard');
+    const docFeedbackScore = document.getElementById('docFeedbackScore');
     const docFeedbackBadge = document.getElementById('docFeedbackBadge');
     const docFeedbackDesc = document.getElementById('docFeedbackDesc');
     const docFeedbackRecs = document.getElementById('docFeedbackRecs');
@@ -865,6 +866,9 @@ Total Testados:
 
         // Feedback Section
         docFeedbackCard.className = `doc-feedback-card ${data.feedback.docBandClass}`;
+        if (docFeedbackScore) {
+            docFeedbackScore.textContent = data.score;
+        }
         docFeedbackBadge.textContent = data.feedback.rating;
         docFeedbackDesc.textContent = data.feedback.evaluation;
         docFeedbackRecs.textContent = data.feedback.recommendations;
@@ -1093,17 +1097,25 @@ Total Testados:
                     .doc-kpi-val { font-size:20px; font-weight:700; color:#111827; }
                     .doc-kpi-lbl { font-size:9px; color:#6b7280; font-weight:500; margin-top:2px; }
 
-                    .doc-feedback-card   { border:1px solid #e5e7eb; border-radius:6px; padding:12px; margin-bottom:16px; display:flex; gap:16px; background:#ffffff; }
-                    .doc-feedback-badge  { align-self:flex-start; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:700; white-space:nowrap; text-transform:uppercase; }
+                    .doc-feedback-card   { border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px; display:flex; align-items:center; gap:20px; background:#ffffff; }
+                    .doc-score-container { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; min-width:120px; }
+                    .doc-score-ring      { width:80px; height:80px; border-radius:50%; border:4px solid #e5e7eb; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#0d0b1a; color:#ffffff; box-shadow:0 0 10px rgba(0,0,0,0.15); }
+                    .doc-score-number    { font-family:'Outfit', sans-serif; font-size:28px; font-weight:800; line-height:1; color:#ffffff; }
+                    .doc-score-lbl-pts   { font-size:8px; text-transform:uppercase; color:#9ca3af; font-weight:600; }
+                    .doc-feedback-badge  { padding:4px 10px; border-radius:20px; font-size:9px; font-weight:700; text-transform:uppercase; text-align:center; white-space:nowrap; border:1px solid transparent; }
                     .doc-band-red        { border-left:4px solid #ef4444; }
-                    .doc-band-red    .doc-feedback-badge { background:#fee2e2; color:#b91c1c; }
+                    .doc-band-red .doc-score-ring { border-color:#ef4444; box-shadow:0 0 10px rgba(239,68,68,0.3); }
+                    .doc-band-red .doc-feedback-badge { background:#fee2e2; color:#b91c1c; border-color:rgba(239,68,68,0.3); }
                     .doc-band-orange     { border-left:4px solid #f59e0b; }
-                    .doc-band-orange .doc-feedback-badge { background:#fef3c7; color:#b45309; }
+                    .doc-band-orange .doc-score-ring { border-color:#f59e0b; box-shadow:0 0 10px rgba(245,158,11,0.3); }
+                    .doc-band-orange .doc-feedback-badge { background:#fef3c7; color:#b45309; border-color:rgba(245,158,11,0.3); }
                     .doc-band-yellow     { border-left:4px solid #eab308; }
-                    .doc-band-yellow .doc-feedback-badge { background:#fef9c3; color:#854d0e; }
+                    .doc-band-yellow .doc-score-ring { border-color:#eab308; box-shadow:0 0 10px rgba(234,179,8,0.3); }
+                    .doc-band-yellow .doc-feedback-badge { background:#fef9c3; color:#854d0e; border-color:rgba(234,179,8,0.3); }
                     .doc-band-green      { border-left:4px solid #10b981; }
-                    .doc-band-green  .doc-feedback-badge { background:#d1fae5; color:#047857; }
-                    .doc-feedback-body         { display:flex; flex-direction:column; gap:6px; }
+                    .doc-band-green .doc-score-ring { border-color:#10b981; box-shadow:0 0 10px rgba(16,185,129,0.3); }
+                    .doc-band-green .doc-feedback-badge { background:#d1fae5; color:#047857; border-color:rgba(16,185,129,0.3); }
+                    .doc-feedback-body         { display:flex; flex-direction:column; gap:6px; flex:1; }
                     .doc-feedback-body .doc-desc { font-size:11px; color:#374151; }
                     .doc-recs-box              { font-size:10px; color:#4b5563; border-top:1px solid #f3f4f6; padding-top:6px; }
                     .doc-recs-box strong       { color:#1f2937; }
