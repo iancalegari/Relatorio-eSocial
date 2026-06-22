@@ -51,10 +51,16 @@
                 <div class="panel-header">
                     <i data-lucide="file-text" class="panel-icon"></i>
                     <h2>Dados do Relatório</h2>
-                    <button type="button" class="btn-help-score" id="btnHelpScore"
-                        title="Como funciona o cálculo da pontuação?">
-                        <i data-lucide="help-circle"></i>
-                    </button>
+                    <div class="panel-header-actions">
+                        <button type="button" class="btn-help-score" id="btnHistory"
+                            title="Ver histórico de relatórios gerados">
+                            <i data-lucide="history"></i>
+                        </button>
+                        <button type="button" class="btn-help-score" id="btnHelpScore"
+                            title="Como funciona o cálculo da pontuação?">
+                            <i data-lucide="help-circle"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="panel-grid">
@@ -332,10 +338,9 @@
                 <div class="score-formula-card">
                     <h4>Fórmula da Pontuação</h4>
                     <div class="formula-display">
-                        <code>Pontuação = (Aprovados × 10) + (Reprovados × 2) + (Extras × 5)</code>
+                        <code>Pontuação = (Total de Testes × 10) + (Extras × 5)</code>
                     </div>
-                    <p class="formula-desc">Cada teste aprovado garante 10 pontos, reprovados garantem 2 pontos e cada
-                        tarefa extra realizada adiciona 5 pontos ao score final.</p>
+                    <p class="formula-desc">Cada teste realizado garante 10 pontos, independente do resultado (aprovado ou reprovado), pois o esforço de testar é o que conta. Tarefas extras realizadas adicionam 5 pontos ao score final.</p>
                 </div>
                 <div class="score-thresholds-card">
                     <h4>Níveis de Desempenho</h4>
@@ -357,6 +362,76 @@
                             <span class="threshold-label">Excelente Desempenho</span>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div class="modal-backdrop" id="historyModal">
+        <div class="modal-container modal-history">
+            <div class="modal-header">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <i data-lucide="history" style="width:20px;height:20px;color:var(--primary)"></i>
+                    <h3>Histórico de Relatórios</h3>
+                </div>
+                <button class="btn-close" id="btnCloseHistory">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body-scroll history-modal-body">
+                <div id="historyEmptyState" class="history-empty-state">
+                    <i data-lucide="inbox"></i>
+                    <p>Nenhum relatório salvo ainda.</p>
+                    <span>Processe um relatório e ele aparecerá aqui automaticamente.<br>Entradas expiram após <strong>5 dias</strong>.</span>
+                </div>
+                <table class="history-table" id="historyTable" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>Nome do Arquivo</th>
+                            <th>Data de Geração</th>
+                            <th>Aprovados / Reprovados</th>
+                            <th>Total</th>
+                            <th>Pontuação</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody"></tbody>
+                </table>
+            </div>
+            <div class="history-modal-footer">
+                <span id="historyCount" class="history-count-label"></span>
+                <button class="btn-clear-history" id="btnClearHistory">
+                    <i data-lucide="trash-2" class="icon-xs"></i> Limpar Tudo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Clear History Modal -->
+    <div class="modal-backdrop" id="clearConfirmModal">
+        <div class="modal-container modal-small" style="height: auto; max-height: 85vh;">
+            <div class="modal-header">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <i data-lucide="alert-triangle" style="width:20px;height:20px;color:var(--color-danger)"></i>
+                    <h3 style="color: var(--color-danger);">Limpar Histórico</h3>
+                </div>
+                <button class="btn-close" id="btnCancelClearClose">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="score-modal-body" style="text-align:center; padding: 32px 24px; display: flex; flex-direction: column; gap: 24px;">
+                <p style="font-size: 15px; color: var(--text-main); margin: 0; line-height: 1.6;">
+                    Tem certeza que deseja limpar todo o histórico? <br>
+                    Esta ação <strong>não pode ser desfeita</strong>.
+                </p>
+                <div style="display:flex; justify-content:center; gap:16px; margin-top: 8px;">
+                    <button class="btn-download" id="btnConfirmClear" style="background: var(--color-danger); color: white; padding: 10px 24px; font-size: 14px; font-weight: 600; border-radius: var(--border-radius-md); border: none; cursor: pointer;">
+                        Sim, Limpar Tudo
+                    </button>
+                    <button class="btn-preview" id="btnCancelClear" style="padding: 10px 24px; font-size: 14px; font-weight: 600; border-radius: var(--border-radius-md); cursor: pointer;">
+                        Cancelar
+                    </button>
                 </div>
             </div>
         </div>

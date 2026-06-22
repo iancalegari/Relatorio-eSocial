@@ -1774,3 +1774,241 @@ body {
     text-transform: uppercase;
 }
 
+/* --- History Modal Styling --- */
+.modal-history {
+    max-width: 950px;
+    width: 95%;
+    height: 80vh;
+}
+
+.history-modal-body {
+    display: block;
+    padding: 24px;
+    background: #0b0819;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--text-main);
+}
+
+.history-table th {
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--primary);
+    font-weight: 600;
+    font-family: var(--font-header);
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 2px solid rgba(156, 206, 195, 0.15);
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.history-table td {
+    padding: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    vertical-align: middle;
+}
+
+.history-table tr:hover {
+    background: rgba(255, 255, 255, 0.015);
+}
+
+/* Row elements styling */
+.hist-filename {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    max-width: 250px;
+}
+
+.hist-filename span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hist-file-icon {
+    color: var(--primary);
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.hist-date {
+    line-height: 1.4;
+}
+
+.hist-expiry {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+.hist-expiry.expiry-warn {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+}
+
+.hist-expiry.expiry-urgent {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+}
+
+.hist-status-pills {
+    display: flex;
+    gap: 8px;
+}
+
+.hist-pill {
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.hist-pill.hist-approved {
+    background: rgba(16, 185, 129, 0.12);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.hist-pill.hist-reproved {
+    background: rgba(239, 68, 68, 0.12);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.hist-total {
+    font-weight: 600;
+}
+
+.hist-score {
+    font-weight: 700;
+    color: #fbbf24;
+}
+
+.hist-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-hist-download {
+    background: rgba(156, 206, 195, 0.1);
+    border: 1px solid rgba(156, 206, 195, 0.2);
+    color: var(--primary);
+    padding: 6px 12px;
+    border-radius: var(--border-radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition-smooth);
+}
+
+.btn-hist-download:hover {
+    background: var(--primary);
+    color: var(--text-inverse);
+    border-color: var(--primary);
+}
+
+.btn-hist-delete {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    padding: 6px;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-smooth);
+}
+
+.btn-hist-delete:hover {
+    background: #ef4444;
+    color: white;
+    border-color: #ef4444;
+}
+
+/* History Modal Footer & Empty State */
+.history-modal-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 24px;
+    background: rgba(13, 9, 31, 0.9);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    gap: 12px;
+}
+
+.history-count-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.btn-clear-history {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    padding: 8px 18px;
+    border-radius: var(--border-radius-md);
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.btn-clear-history:hover {
+    background: #ef4444;
+    color: white;
+    border-color: #ef4444;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+}
+
+.history-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+    color: var(--text-muted);
+    gap: 16px;
+}
+
+.history-empty-state i {
+    width: 48px;
+    height: 48px;
+    color: rgba(156, 206, 195, 0.3);
+}
+
+.history-empty-state p {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.history-empty-state span {
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+

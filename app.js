@@ -118,6 +118,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const pdfTemplateTarget = document.getElementById('pdfTemplateTarget');
     const btnDownloadTemplateTXT = document.getElementById('btnDownloadTemplateTXT');
 
+    // History Modal elements
+    const historyModal = document.getElementById('historyModal');
+    const btnHistory = document.getElementById('btnHistory');
+    const btnCloseHistory = document.getElementById('btnCloseHistory');
+    const historyTableBody = document.getElementById('historyTableBody');
+    const historyTable = document.getElementById('historyTable');
+    const historyEmptyState = document.getElementById('historyEmptyState');
+    const historyCount = document.getElementById('historyCount');
+    const btnClearHistory = document.getElementById('btnClearHistory');
+
+    // Clear Confirm Modal elements
+    const clearConfirmModal = document.getElementById('clearConfirmModal');
+    const btnConfirmClear = document.getElementById('btnConfirmClear');
+    const btnCancelClear = document.getElementById('btnCancelClear');
+    const btnCancelClearClose = document.getElementById('btnCancelClearClose');
+
     // Document elements inside Modal
     const docTester = document.getElementById('docTester');
     const docScore = document.getElementById('docScore');
@@ -143,9 +159,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const docExtraTasksSection = document.getElementById('docExtraTasksSection');
     const docExtraTasksList = document.getElementById('docExtraTasksList');
 
-    // Set Default End Date to current date
+    // Set Default Start Date to current date; End Date left empty for manual input
     const today = new Date().toISOString().split('T')[0];
-    endDateInput.value = today;
+    startDateInput.value = today;
+    endDateInput.value = '';
 
     // Load and save tester name from cache (localStorage)
     const savedTesterName = localStorage.getItem('testerName');
@@ -708,8 +725,9 @@ Total Testados:
         const extraTasksCount = extraTasks > 0 ? extraTasks : extraTasksList.length;
 
         // Calculations rules:
-        // nota = (aprovados * 10) + (reprovados * 2) + (extra_tasks * 5)
-        const score = (approved * 10) + (reproved * 2) + (extraTasksCount * 5);
+        // nota = (total_testes * 10) + (extra_tasks * 5)
+        // Cada teste realizado vale 10 pontos (aprovado ou reprovado), extras valem 5.
+        const score = (total * 10) + (extraTasksCount * 5);
         const feedback = getFeedbackDetails(score);
 
         // Update State
@@ -1183,12 +1201,215 @@ Total Testados:
     // Botão principal de download (dashboard)
     btnDownloadPDF.addEventListener('click', () => {
         populateModalA4();
+        saveToHistory(parsedData);
         generatePdfPrint(pdfTemplateTarget);
     });
 
     // Botão do modal — gera preview de impressão e fecha o modal
     btnModalDownload.addEventListener('click', () => {
+        saveToHistory(parsedData);
         generatePdfPrint(pdfTemplateTarget);
         previewModal.classList.remove('open');
+    });
+
+    // ==========================================================================
+    // 📚 Sistema de Histórico (localStorage — expira em 5 dias)
+    // ==========================================================================
+    const HISTORY_KEY = 'reportHistory';
+    const HISTORY_EXPIRY_DAYS = 5;
+
+    function saveToHistory(data) {
+        const now = new Date();
+        const dd = String(now.getDate()).padStart(2, '0');
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const yyyy = now.getFullYear();
+        const safeName = (data.testerName || 'Testador')
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/\s+/g, '_');
+        const fileName = `Relatorio_${safeName}_${dd}-${mm}-${yyyy}`;
+
+        const entry = {
+            id: `hist_${now.getTime()}`,
+            savedAt: now.toISOString(),
+            fileName: fileName,
+            testerName: data.testerName,
+            startDate: data.startDate,
+            endDate: data.endDate,
+            approved: data.kpis.approved,
+            reproved: data.kpis.reproved,
+            total: data.kpis.total,
+            score: data.score,
+            parsedData: data
+        };
+
+        let history = loadHistory();
+        // Remove entrada duplicada do mesmo nome (mesma sessão / mesmo dia)
+        history = history.filter(h => h.fileName !== fileName);
+        history.unshift(entry);
+        // Mantém apenas os últimos 5
+        if (history.length > 5) history = history.slice(0, 5);
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    }
+
+    function loadHistory() {
+        try {
+            const all = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            const now = Date.now();
+            const expiryMs = HISTORY_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+            // Filtra entradas expiradas (mais de 5 dias)
+            const valid = all.filter(h => {
+                const age = now - new Date(h.savedAt).getTime();
+                return age < expiryMs;
+            });
+            // Se algum expirou, salva a lista limpa
+            if (valid.length !== all.length) {
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(valid));
+            }
+            return valid;
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function deleteHistoryEntry(id) {
+        let history = loadHistory();
+        history = history.filter(h => h.id !== id);
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    }
+
+    function formatHistoryDate(isoString) {
+        try {
+            const d = new Date(isoString);
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            const hh = String(d.getHours()).padStart(2, '0');
+            const min = String(d.getMinutes()).padStart(2, '0');
+            return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
+        } catch (e) { return '--'; }
+    }
+
+    function daysUntilExpiry(isoString) {
+        const age = Date.now() - new Date(isoString).getTime();
+        const expiryMs = HISTORY_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+        const remaining = Math.ceil((expiryMs - age) / (24 * 60 * 60 * 1000));
+        return remaining;
+    }
+
+    function renderHistoryModal() {
+        const history = loadHistory();
+        historyTableBody.innerHTML = '';
+
+        if (history.length === 0) {
+            historyEmptyState.style.display = 'flex';
+            historyTable.style.display = 'none';
+            historyCount.textContent = '';
+            return;
+        }
+
+        historyEmptyState.style.display = 'none';
+        historyTable.style.display = 'table';
+        historyCount.textContent = `${history.length} relatório${history.length !== 1 ? 's' : ''} salvo${history.length !== 1 ? 's' : ''} · expira em até ${HISTORY_EXPIRY_DAYS} dias`;
+
+        history.forEach(entry => {
+            const daysLeft = daysUntilExpiry(entry.savedAt);
+            const expiryClass = daysLeft <= 1 ? 'expiry-urgent' : daysLeft <= 2 ? 'expiry-warn' : '';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <div class="hist-filename">
+                        <i data-lucide="file-text" class="hist-file-icon"></i>
+                        <span title="${entry.fileName}">${entry.fileName}</span>
+                    </div>
+                </td>
+                <td class="hist-date">
+                    <div>${formatHistoryDate(entry.savedAt)}</div>
+                    <span class="hist-expiry ${expiryClass}">Expira em ${daysLeft}d</span>
+                </td>
+                <td>
+                    <div class="hist-status-pills">
+                        <span class="hist-pill hist-approved">✓ ${entry.approved}</span>
+                        <span class="hist-pill hist-reproved">✗ ${entry.reproved}</span>
+                    </div>
+                </td>
+                <td class="hist-total">${entry.total}</td>
+                <td><span class="hist-score">${entry.score} pts</span></td>
+                <td>
+                    <div class="hist-actions">
+                        <button class="btn-hist-download" data-id="${entry.id}" title="Baixar PDF">
+                            <i data-lucide="download" class="icon-xs"></i> Baixar
+                        </button>
+                        <button class="btn-hist-delete" data-id="${entry.id}" title="Excluir entrada">
+                            <i data-lucide="trash-2" class="icon-xs"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            historyTableBody.appendChild(tr);
+        });
+
+        if (window.lucide) window.lucide.createIcons({ root: historyTableBody });
+
+        // Bind download buttons
+        historyTableBody.querySelectorAll('.btn-hist-download').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.getAttribute('data-id');
+                const entry = loadHistory().find(h => h.id === id);
+                if (entry && entry.parsedData) {
+                    parsedData = entry.parsedData;
+                    renderDashboard();
+                    populateModalA4();
+                    generatePdfPrint(pdfTemplateTarget);
+                    showToast(`Gerando PDF: ${entry.fileName}`, 'info');
+                }
+            });
+        });
+
+        // Bind delete buttons
+        historyTableBody.querySelectorAll('.btn-hist-delete').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.getAttribute('data-id');
+                deleteHistoryEntry(id);
+                renderHistoryModal();
+                showToast('Entrada removida do histórico.', 'info');
+            });
+        });
+    }
+
+    // History Modal event listeners
+    btnHistory.addEventListener('click', () => {
+        renderHistoryModal();
+        historyModal.classList.add('open');
+    });
+
+    btnCloseHistory.addEventListener('click', () => {
+        historyModal.classList.remove('open');
+    });
+
+    historyModal.addEventListener('click', (e) => {
+        if (e.target === historyModal) historyModal.classList.remove('open');
+    });
+
+    // Custom confirm modal logic
+    btnClearHistory.addEventListener('click', () => {
+        clearConfirmModal.classList.add('open');
+    });
+
+    const closeConfirmModal = () => {
+        clearConfirmModal.classList.remove('open');
+    };
+
+    btnCancelClear.addEventListener('click', closeConfirmModal);
+    btnCancelClearClose.addEventListener('click', closeConfirmModal);
+    clearConfirmModal.addEventListener('click', (e) => {
+        if (e.target === clearConfirmModal) closeConfirmModal();
+    });
+
+    btnConfirmClear.addEventListener('click', () => {
+        localStorage.removeItem(HISTORY_KEY);
+        renderHistoryModal();
+        closeConfirmModal();
+        showToast('Histórico limpo com sucesso.', 'info');
     });
 });
