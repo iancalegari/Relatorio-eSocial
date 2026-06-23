@@ -583,7 +583,7 @@ body {
 
 /* Buttons */
 .btn-primary {
-    background: linear-gradient(135deg, #9ccec3 0%, #7dbba9 100%);
+    background: var(--primary);
     border: 1px solid rgba(255, 255, 255, 0.15);
     color: var(--text-inverse);
     padding: 14px 24px;
@@ -597,12 +597,12 @@ body {
     gap: 10px;
     cursor: pointer;
     transition: var(--transition-smooth);
-    box-shadow: 0 4px 15px rgba(156, 206, 195, 0.25);
+    box-shadow: 0 4px 15px var(--primary-glow);
 }
 
 .btn-primary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(156, 206, 195, 0.45), 0 0 0 3px rgba(156, 206, 195, 0.2);
+    box-shadow: 0 6px 20px var(--primary-glow), 0 0 0 3px var(--primary-glow-subtle);
     filter: brightness(1.05);
 }
 
@@ -727,7 +727,7 @@ body.role-dev #btnProcess:hover {
 
 .btn-download:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0 15px rgba(156, 206, 195, 0.5);
+    box-shadow: 0 0 15px var(--primary-glow);
     filter: brightness(1.1);
 }
 
@@ -2029,8 +2029,8 @@ body.role-dev #btnProcess:hover {
 }
 
 .btn-hist-download {
-    background: rgba(156, 206, 195, 0.1);
-    border: 1px solid rgba(156, 206, 195, 0.2);
+    background: var(--primary-glow-very-subtle);
+    border: 1px solid var(--primary-glow-subtle-border);
     color: var(--primary);
     padding: 6px 12px;
     border-radius: var(--border-radius-sm);

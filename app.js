@@ -1304,6 +1304,11 @@ Total Tarefas: 3
             return;
         }
 
+        const role = parsedData.role || (document.getElementById('userRole') ? document.getElementById('userRole').value : 'qa');
+        const primaryColor = role === 'dev' ? '#f59e0b' : '#10b981';
+        const primaryGlow = role === 'dev' ? 'rgba(245, 158, 11, 0.35)' : 'rgba(16, 185, 129, 0.35)';
+        const headerBorderColor = role === 'dev' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(16, 185, 129, 0.15)';
+
         // Capture the fully-rendered inner HTML from the live DOM element
         const contentHtml = sourceElement.querySelector('.document-content').innerHTML;
 
@@ -1333,7 +1338,7 @@ Total Tarefas: 3
                     /* ── Sticky header bar (hidden on print) ─────────────────── */
                     .print-header {
                         background: #100d23;
-                        border-bottom: 1px solid rgba(156,206,195,.15);
+                        border-bottom: 1px solid ${headerBorderColor};
                         padding: 14px 24px;
                         width: 100%;
                         position: sticky;
@@ -1355,7 +1360,7 @@ Total Tarefas: 3
                         font-weight: 600;
                     }
                     .btn-print {
-                        background: linear-gradient(135deg,#9ccec3 0%,#7dbba9 100%);
+                        background: ${primaryColor};
                         border: 1px solid rgba(255,255,255,.15);
                         color: #0a100f;
                         padding: 10px 20px;
@@ -1368,11 +1373,11 @@ Total Tarefas: 3
                         gap: 8px;
                         cursor: pointer;
                         transition: all .2s ease;
-                        box-shadow: 0 4px 15px rgba(156,206,195,.25);
+                        box-shadow: 0 4px 15px ${primaryGlow};
                     }
                     .btn-print:hover {
                         transform: translateY(-1px);
-                        box-shadow: 0 6px 20px rgba(156,206,195,.4);
+                        box-shadow: 0 6px 20px ${primaryGlow};
                         filter: brightness(1.05);
                     }
 
@@ -1397,7 +1402,7 @@ Total Tarefas: 3
                     }
 
                     /* ── Document component styles (fully inlined) ───────────── */
-                    :root { --secondary: #2563eb; }
+                    :root { --secondary: ${primaryColor}; }
                     .doc-header-top { display:flex; justify-content:space-between; align-items:center; }
                     .doc-logo-area  { display:flex; align-items:center; gap:8px; }
                     .doc-logo       { max-height:40px; width:auto; }
@@ -1410,7 +1415,7 @@ Total Tarefas: 3
                     .doc-meta-item .lbl { font-size:9px; color:#6b7280; font-weight:700; margin-bottom:2px; }
                     .doc-meta-item .val { font-size:11px; color:#1f2937; font-weight:600; }
 
-                    .doc-section-title { background:#f8fafc; border-left:3px solid #2563eb; color:#2563eb; padding:6px 10px; font-size:11px; font-weight:700; margin-top:16px; margin-bottom:12px; text-transform:uppercase; }
+                    .doc-section-title { background:#f8fafc; border-left:3px solid ${primaryColor}; color:${primaryColor}; padding:6px 10px; font-size:11px; font-weight:700; margin-top:16px; margin-bottom:12px; text-transform:uppercase; }
 
                     .doc-kpis    { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:16px; }
                     .doc-kpi-box { background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px; padding:10px; text-align:center; display:flex; flex-direction:column; justify-content:center; }
