@@ -72,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const rawInput = document.getElementById('rawInput');
     const charCount = document.getElementById('charCount');
     const testerNameInput = document.getElementById('testerName');
+    const userRoleSelect = document.getElementById('userRole');
     const extraTasksInput = document.getElementById('extraTasks');
     const startDateInput = document.getElementById('startDate');
     const endDateInput = document.getElementById('endDate');
@@ -174,12 +175,105 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('testerName', testerNameInput.value.trim());
     });
 
+    // Load and save cargo/role from cache (localStorage)
+    const savedUserRole = localStorage.getItem('userRole');
+    if (savedUserRole) {
+        userRoleSelect.value = savedUserRole;
+    }
+    userRoleSelect.addEventListener('change', () => {
+        localStorage.setItem('userRole', userRoleSelect.value);
+        updateScoreInfoModalText();
+    });
+
+    function updateScoreInfoModalText() {
+        const role = userRoleSelect.value;
+        const formulaDisplayCode = document.getElementById('formulaDisplayCode');
+        const formulaDescText = document.getElementById('formulaDescText');
+        const thresholdItemsContainer = document.getElementById('thresholdItemsContainer');
+        const panelTitle = document.getElementById('panelTitle');
+        const rawInputLabel = document.getElementById('rawInputLabel');
+        const roleIndicator = document.getElementById('roleIndicator');
+
+        if (panelTitle) {
+            panelTitle.textContent = role === 'dev' ? 'Dados do Relatório (Programador)' : 'Dados do Relatório (QA)';
+        }
+        if (rawInputLabel) {
+            rawInputLabel.textContent = role === 'dev' ? 'Insira as Tarefas Realizadas' : 'Insira os Testes Realizados';
+        }
+        if (roleIndicator) {
+            if (role === 'dev') {
+                roleIndicator.textContent = 'Dados do Programador';
+                roleIndicator.className = 'role-badge badge-dev';
+            } else {
+                roleIndicator.textContent = 'Dados do QA';
+                roleIndicator.className = 'role-badge badge-qa';
+            }
+        }
+
+        if (role === 'dev') {
+            document.body.classList.add('role-dev');
+            document.body.classList.remove('role-qa');
+        } else {
+            document.body.classList.add('role-qa');
+            document.body.classList.remove('role-dev');
+        }
+
+        if (!formulaDisplayCode || !formulaDescText || !thresholdItemsContainer) return;
+
+        if (role === 'dev') {
+            formulaDisplayCode.textContent = "Pontuação = Somatório(Complexidade do Card) + (Extras × 10)";
+            formulaDescText.innerHTML = "Cada tarefa concluída pontua de acordo com a complexidade indicada no título ou notas do card: <strong>[Fácil] = 10 pts</strong>, <strong>[Média] = 20 pts</strong>, <strong>[Difícil] = 40 pts</strong> (cards sem tag contam como Médias, 20 pts). Cada tarefa extra realizada adiciona 10 pontos ao score final.";
+            thresholdItemsContainer.innerHTML = `
+                <div class="threshold-item item-red">
+                    <span class="threshold-badge">0 - 50 pts</span>
+                    <span class="threshold-label">Baixo Desempenho</span>
+                </div>
+                <div class="threshold-item item-orange">
+                    <span class="threshold-badge">51 - 120 pts</span>
+                    <span class="threshold-label">Bom Desempenho</span>
+                </div>
+                <div class="threshold-item item-yellow">
+                    <span class="threshold-badge">121 - 200 pts</span>
+                    <span class="threshold-label">Muito Bom Desempenho</span>
+                </div>
+                <div class="threshold-item item-green">
+                    <span class="threshold-badge">200+ pts</span>
+                    <span class="threshold-label">Excelente Desempenho</span>
+                </div>
+            `;
+        } else {
+            formulaDisplayCode.textContent = "Pontuação = (Total de Testes × 10) + (Extras × 5)";
+            formulaDescText.textContent = "Cada teste realizado garante 10 pontos, independente do resultado (aprovado ou reprovado), pois o esforço de testar é o que conta. Tarefas extras realizadas adicionam 5 pontos ao score final.";
+            thresholdItemsContainer.innerHTML = `
+                <div class="threshold-item item-red">
+                    <span class="threshold-badge">0 - 30 pts</span>
+                    <span class="threshold-label">Baixo Desempenho</span>
+                </div>
+                <div class="threshold-item item-orange">
+                    <span class="threshold-badge">31 - 70 pts</span>
+                    <span class="threshold-label">Bom Desempenho</span>
+                </div>
+                <div class="threshold-item item-yellow">
+                    <span class="threshold-badge">71 - 100 pts</span>
+                    <span class="threshold-label">Muito Bom Desempenho</span>
+                </div>
+                <div class="threshold-item item-green">
+                    <span class="threshold-badge">100+ pts</span>
+                    <span class="threshold-label">Excelente Desempenho</span>
+                </div>
+            `;
+        }
+    }
+
+    // Initialize modal text
+    updateScoreInfoModalText();
+
     // Galaxy animation removed as requested.
 
     // ==========================================================================
     // 📝 Templates & Character Counts
     // ==========================================================================
-    const txtTemplate =
+    const txtTemplateQA =
         `📌 CARD 01
 
 Nome do card: 
@@ -205,6 +299,40 @@ Total Testados:
 - 
 - `;
 
+    const txtTemplateDev =
+        `📌 CARD 01
+
+Nome do card: [Média] Minha tarefa principal
+ID do card: #101
+Servidor: Produção
+Status: Movido para teste
+Observação teste: Implementação da nova funcionalidade concluída.
+
+📌 CARD 02
+
+Nome do card: [Fácil] Ajuste visual no formulário
+ID do card: #102
+Servidor: Homologação
+Status: Em andamento
+Observação teste: Ajustado alinhamento do seletor de cargo.
+
+📌 CARD 03
+
+Nome do card: [Difícil] Nova API de integração de notas
+ID do card: #103
+Servidor: Desenvolvimento
+Status: Movido para teste
+Observação teste: Implementação de controllers e testes de integração com sucesso.
+
+📊 RESULTADOS DO DIA
+Movido para teste: 2
+Em andamento: 1
+Total Tarefas: 3
+
+🧪 TAREFAS EXTRAS REALIZADAS
+- Code review realizado no card #99
+- Deploy no servidor de teste`;
+
     // Empty by default on startup
     rawInput.value = "";
     charCount.textContent = "0 caracteres";
@@ -214,16 +342,19 @@ Total Testados:
     });
 
     btnTemplateTXT.addEventListener('click', () => {
-        rawInput.value = txtTemplate;
-        charCount.textContent = `${txtTemplate.length} caracteres`;
+        const activeTemplate = userRoleSelect.value === 'dev' ? txtTemplateDev : txtTemplateQA;
+        rawInput.value = activeTemplate;
+        charCount.textContent = `${activeTemplate.length} caracteres`;
     });
 
     btnDownloadTemplateTXT.addEventListener('click', () => {
-        const blob = new Blob([txtTemplate], { type: 'text/plain' });
+        const activeTemplate = userRoleSelect.value === 'dev' ? txtTemplateDev : txtTemplateQA;
+        const activeFilename = userRoleSelect.value === 'dev' ? 'modelo_relatorio_programador.txt' : 'modelo_relatorio_testes.txt';
+        const blob = new Blob([activeTemplate], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'modelo_relatorio_testes.txt';
+        a.download = activeFilename;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -374,6 +505,10 @@ Total Testados:
     function detectStatus(text) {
         if (!text) return null;
         const lower = text.toLowerCase();
+        const role = userRoleSelect.value;
+        if (role === 'dev') {
+            return cleanMarkdownAndEmojis(text).trim() || 'Movido para teste';
+        }
 
         const reprovedSynonyms = [
             'reprovado', 'não aprovado', 'recusado', 'indeferido',
@@ -663,39 +798,95 @@ Total Testados:
         return dateString;
     }
 
-    function getFeedbackDetails(score) {
-        if (score <= 30) {
-            return {
-                bandClass: 'band-red',
-                docBandClass: 'doc-band-red',
-                rating: 'Baixo desempenho',
-                evaluation: 'O desempenho está abaixo do esperado para o nível de execução das tarefas.',
-                recommendations: 'Revisar os conceitos básicos e realizar novas execuções com mais atenção aos detalhes.'
-            };
-        } else if (score <= 70) {
-            return {
-                bandClass: 'band-orange',
-                docBandClass: 'doc-band-orange',
-                rating: 'Bom desempenho',
-                evaluation: 'O desempenho está dentro do esperado, mas ainda apresenta inconsistências em algumas execuções.',
-                recommendations: 'Atenção maior na validação das tarefas antes de finalizá-las e prática contínua para evolução.'
-            };
-        } else if (score <= 100) {
-            return {
-                bandClass: 'band-yellow',
-                docBandClass: 'doc-band-yellow',
-                rating: 'Muito bom desempenho',
-                evaluation: 'O desempenho está bom, com boa consistência na execução das tarefas.',
-                recommendations: 'Manter o padrão atual e continuar praticando para aprimorar ainda mais a precisão.'
-            };
+    function detectComplexity(taskText, noteText) {
+        const fullText = `${taskText || ''} ${noteText || ''}`.toLowerCase();
+        if (fullText.includes('fácil') || fullText.includes('facil')) {
+            return { label: 'Fácil', score: 10, class: 'facil' };
+        } else if (fullText.includes('difícil') || fullText.includes('dificil')) {
+            return { label: 'Difícil', score: 40, class: 'dificil' };
+        } else if (fullText.includes('média') || fullText.includes('media')) {
+            return { label: 'Média', score: 20, class: 'media' };
+        }
+        // Default to Média
+        return { label: 'Média', score: 20, class: 'media' };
+    }
+
+    function cleanComplexityTag(str) {
+        if (!str) return '';
+        return str.replace(/\[\s*(fácil|facil|média|media|difícil|dificil)\s*\]/gi, '')
+                  .replace(/\(\s*(fácil|facil|média|media|difícil|dificil)\s*\)/gi, '')
+                  .trim();
+    }
+
+    function getFeedbackDetails(score, role = 'qa') {
+        if (role === 'dev') {
+            if (score <= 50) {
+                return {
+                    bandClass: 'band-red',
+                    docBandClass: 'doc-band-red',
+                    rating: 'Baixo desempenho',
+                    evaluation: 'A entrega de tarefas está abaixo do volume esperado para o período.',
+                    recommendations: 'Revisar a organização das tarefas e buscar suporte técnico se houver impedimentos.'
+                };
+            } else if (score <= 120) {
+                return {
+                    bandClass: 'band-orange',
+                    docBandClass: 'doc-band-orange',
+                    rating: 'Bom desempenho',
+                    evaluation: 'O desenvolvedor está entregando tarefas de forma consistente e com qualidade aceitável.',
+                    recommendations: 'Focar na otimização do código e tentar antecipar testes para evitar retornos do QA.'
+                };
+            } else if (score <= 200) {
+                return {
+                    bandClass: 'band-yellow',
+                    docBandClass: 'doc-band-yellow',
+                    rating: 'Muito bom desempenho',
+                    evaluation: 'Excelente ritmo de entregas com complexidades variadas de forma muito consistente.',
+                    recommendations: 'Manter a boa qualidade e apoiar o time no compartilhamento de conhecimento.'
+                };
+            } else {
+                return {
+                    bandClass: 'band-green',
+                    docBandClass: 'doc-band-green',
+                    rating: 'Excelente desempenho',
+                    evaluation: 'Alto volume de entrega de tarefas complexas e com excelente qualidade técnica.',
+                    recommendations: 'Continuar liderando iniciativas técnicas complexas e disseminando boas práticas.'
+                };
+            }
         } else {
-            return {
-                bandClass: 'band-green',
-                docBandClass: 'doc-band-green',
-                rating: 'Excelente desempenho',
-                evaluation: 'O desempenho está excelente, com alto nível de consistência e qualidade.',
-                recommendations: 'Continuar mantendo o padrão atual e explorar tarefas mais avançadas para evolução contínua.'
-            };
+            if (score <= 30) {
+                return {
+                    bandClass: 'band-red',
+                    docBandClass: 'doc-band-red',
+                    rating: 'Baixo desempenho',
+                    evaluation: 'O desempenho está abaixo do esperado para o nível de execução das tarefas.',
+                    recommendations: 'Revisar os conceitos básicos e realizar novas execuções com mais atenção aos detalhes.'
+                };
+            } else if (score <= 70) {
+                return {
+                    bandClass: 'band-orange',
+                    docBandClass: 'doc-band-orange',
+                    rating: 'Bom desempenho',
+                    evaluation: 'O desempenho está dentro do esperado, mas ainda apresenta inconsistências em algumas execuções.',
+                    recommendations: 'Atenção maior na validação das tarefas antes de finalizá-las e prática contínua para evolução.'
+                };
+            } else if (score <= 100) {
+                return {
+                    bandClass: 'band-yellow',
+                    docBandClass: 'doc-band-yellow',
+                    rating: 'Muito bom desempenho',
+                    evaluation: 'O desempenho está bom, com boa consistência na execução das tarefas.',
+                    recommendations: 'Manter o padrão atual e continuar praticando para aprimorar ainda mais a precisão.'
+                };
+            } else {
+                return {
+                    bandClass: 'band-green',
+                    docBandClass: 'doc-band-green',
+                    rating: 'Excelente desempenho',
+                    evaluation: 'O desempenho está excelente, com alto nível de consistência e qualidade.',
+                    recommendations: 'Continuar mantendo o padrão atual e explorar tarefas mais avançadas para evolução contínua.'
+                };
+            }
         }
     }
 
@@ -705,6 +896,7 @@ Total Testados:
         const extraTasks = parseInt(extraTasksInput.value, 10) || 0;
         const start = startDateInput.value;
         const end = endDateInput.value;
+        const role = userRoleSelect.value;
 
         // Parse
         const parseResult = parseInputText(rawText);
@@ -712,28 +904,48 @@ Total Testados:
         const extraTasksList = (parseResult && parseResult.extraTasksTextList) ? parseResult.extraTasksTextList : [];
 
         if (!tasks || tasks.length === 0) {
-            showToast("Nenhum caso de teste pôde ser parseado. Por favor insira dados válidos.", "error");
+            showToast("Nenhum caso de teste/tarefa pôde ser parseado. Por favor insira dados válidos.", "error");
             return;
         }
 
+        // Detect complexity and clean task titles
+        tasks.forEach(t => {
+            t.complexity = detectComplexity(t.task, t.note);
+            t.task = cleanComplexityTag(t.task);
+        });
+
         // Calculate KPI values
         const total = tasks.length;
-        const approved = tasks.filter(t => t.status === 'Aprovado').length;
-        const reproved = tasks.filter(t => t.status === 'Reprovado').length;
+        let approved = 0;
+        let reproved = 0;
+
+        tasks.forEach(t => {
+            const statusInfo = getStatusInfo(t.status, role);
+            if (statusInfo.badgeClass === 'aprovado') {
+                approved++;
+            } else {
+                reproved++;
+            }
+        });
         const rate = total > 0 ? Math.round((approved / total) * 100) : 0;
 
         // Se extraTasks for preenchido via input manualmente usamos ele, senao da listagem
         const extraTasksCount = extraTasks > 0 ? extraTasks : extraTasksList.length;
 
         // Calculations rules:
-        // nota = (total_testes * 10) + (extra_tasks * 5)
-        // Cada teste realizado vale 10 pontos (aprovado ou reprovado), extras valem 5.
-        const score = (total * 10) + (extraTasksCount * 5);
-        const feedback = getFeedbackDetails(score);
+        let score = 0;
+        if (role === 'dev') {
+            const taskPoints = tasks.reduce((sum, t) => sum + t.complexity.score, 0);
+            score = taskPoints + (extraTasksCount * 10);
+        } else {
+            score = (total * 10) + (extraTasksCount * 5);
+        }
+        const feedback = getFeedbackDetails(score, role);
 
         // Update State
         parsedData = {
             testerName: tester,
+            role: role,
             extraTasks: extraTasksCount,
             extraTasksList: extraTasksList,
             startDate: start,
@@ -749,6 +961,34 @@ Total Testados:
         renderDashboard();
     });
 
+    function getStatusInfo(statusText, role = 'qa') {
+        const lower = (statusText || '').toLowerCase();
+        let badgeClass = 'aprovado';
+        let statusIcon = 'check';
+
+        if (role === 'dev') {
+            if (lower.includes('andamento') || lower.includes('review') || lower.includes('desenvolvimento') || lower.includes('fazendo')) {
+                badgeClass = 'andamento';
+                statusIcon = 'clock';
+            } else if (lower.includes('impedido') || lower.includes('pausado') || lower.includes('bloqueado') || lower.includes('erro') || lower.includes('falha') || lower.includes('negado') || lower.includes('reprovado')) {
+                badgeClass = 'pausado';
+                statusIcon = 'alert-triangle';
+            } else {
+                badgeClass = 'aprovado';
+                statusIcon = 'check-check';
+            }
+        } else {
+            if (lower.includes('reprovado') || lower.includes('negado') || lower.includes('falha')) {
+                badgeClass = 'reprovado';
+                statusIcon = 'alert-circle';
+            } else {
+                badgeClass = 'aprovado';
+                statusIcon = 'check';
+            }
+        }
+        return { badgeClass, statusIcon };
+    }
+
     function renderDashboard() {
         const data = parsedData;
 
@@ -762,6 +1002,40 @@ Total Testados:
         kpiReproved.textContent = data.kpis.reproved;
         kpiRate.textContent = `${data.kpis.rate}%`;
         kpiExtras.textContent = data.kpis.extraTasks;
+
+        // Update KPI card labels dynamically
+        const approvedKpiSpan = document.querySelector('.kpi-card[data-kpi="approved"] .kpi-header span');
+        if (approvedKpiSpan) approvedKpiSpan.textContent = data.role === 'dev' ? 'Concluídos / Teste' : 'Aprovados';
+        const reprovedKpiSpan = document.querySelector('.kpi-card[data-kpi="reproved"] .kpi-header span');
+        if (reprovedKpiSpan) reprovedKpiSpan.textContent = data.role === 'dev' ? 'Outros / Andamento' : 'Reprovados';
+        const rateKpiSpan = document.querySelector('.kpi-card[data-kpi="rate"] .kpi-header span');
+        if (rateKpiSpan) rateKpiSpan.textContent = data.role === 'dev' ? 'Taxa de Entrega' : 'Taxa de Aprovação';
+
+        // Update role text label
+        const roleLbl = document.querySelector('.role-lbl');
+        if (roleLbl) {
+            roleLbl.textContent = data.role === 'dev' ? 'Programador / Desenvolvedor' : 'Analista de Qualidade QA';
+        }
+
+        // Toggle table header/column visibility
+        const colComplexities = document.querySelectorAll('.col-complexity');
+        colComplexities.forEach(col => {
+            col.style.display = data.role === 'dev' ? '' : 'none';
+        });
+
+        // Update breakdown card headers dynamically
+        const breakdownApprovedHeader = document.getElementById('breakdownApprovedHeader');
+        const breakdownReprovedHeader = document.getElementById('breakdownReprovedHeader');
+        if (breakdownApprovedHeader) {
+            breakdownApprovedHeader.innerHTML = data.role === 'dev' 
+                ? `Detalhamento: Concluídos / Teste (<span id="countApprovedLabel">${data.kpis.approved}</span>)`
+                : `Detalhamento: Aprovados (<span id="countApprovedLabel">${data.kpis.approved}</span>)`;
+        }
+        if (breakdownReprovedHeader) {
+            breakdownReprovedHeader.innerHTML = data.role === 'dev' 
+                ? `Detalhamento: Outros / Em Andamento (<span id="countReprovedLabel">${data.kpis.reproved}</span>)`
+                : `Detalhamento: Reprovados (<span id="countReprovedLabel">${data.kpis.reproved}</span>)`;
+        }
 
         // Rating panel classes
         ratingPanel.className = `glass-panel rating-panel ${data.feedback.bandClass}`;
@@ -785,24 +1059,24 @@ Total Testados:
         approvedBreakdownList.innerHTML = '';
         reprovedBreakdownList.innerHTML = '';
 
-        countApprovedLabel.textContent = data.kpis.approved;
-        countReprovedLabel.textContent = data.kpis.reproved;
-
         // Render rows and breakdown cards
         data.tasks.forEach(t => {
             // Execution Table Row
             const row = document.createElement('tr');
 
-            const badgeClass = t.status === 'Aprovado' ? 'aprovado' : 'reprovado';
-            const statusIcon = t.status === 'Aprovado' ? 'check' : 'alert-circle';
+            const statusInfo = getStatusInfo(t.status, data.role);
+            const compTd = data.role === 'dev' 
+                ? `<td class="col-complexity"><span class="complexity-badge ${t.complexity.class}">${t.complexity.label}</span></td>`
+                : `<td class="col-complexity" style="display: none;"><span class="complexity-badge ${t.complexity.class}">${t.complexity.label}</span></td>`;
 
             row.innerHTML = `
                 <td><strong>${t.id}</strong></td>
                 <td>${t.task}</td>
+                ${compTd}
                 <td>${t.employee}</td>
                 <td>${formatDate(t.date)}</td>
                 <td>${t.server || 'Não informado'}</td>
-                <td><span class="status-badge ${badgeClass}"><i data-lucide="${statusIcon}" class="icon-xs"></i> ${t.status}</span></td>
+                <td><span class="status-badge ${statusInfo.badgeClass}"><i data-lucide="${statusInfo.statusIcon}" class="icon-xs"></i> ${t.status}</span></td>
                 <td><span class="note-text">${t.note || ''}</span></td>
             `;
             executionTableBody.appendChild(row);
@@ -815,7 +1089,7 @@ Total Testados:
                 ${t.note ? `<p class="note">${t.note}</p>` : ''}
             `;
 
-            if (t.status === 'Aprovado') {
+            if (statusInfo.badgeClass === 'aprovado') {
                 approvedBreakdownList.appendChild(li);
             } else {
                 reprovedBreakdownList.appendChild(li);
@@ -865,6 +1139,32 @@ Total Testados:
         docKpiRate.textContent = `${data.kpis.rate}%`;
         docKpiExtras.textContent = data.kpis.extraTasks;
 
+        // Update PDF template KPI labels dynamically
+        const pdfApprovedKpiLbl = pdfTemplateTarget.querySelector('.doc-kpi-box:nth-child(2) .doc-kpi-lbl');
+        if (pdfApprovedKpiLbl) pdfApprovedKpiLbl.textContent = data.role === 'dev' ? 'Concluídos / Teste' : 'Aprovados';
+        const pdfReprovedKpiLbl = pdfTemplateTarget.querySelector('.doc-kpi-box:nth-child(3) .doc-kpi-lbl');
+        if (pdfReprovedKpiLbl) pdfReprovedKpiLbl.textContent = data.role === 'dev' ? 'Outros / Andamento' : 'Reprovados';
+        const pdfRateKpiLbl = pdfTemplateTarget.querySelector('.doc-kpi-box:nth-child(4) .doc-kpi-lbl');
+        if (pdfRateKpiLbl) pdfRateKpiLbl.textContent = data.role === 'dev' ? 'Taxa de Entrega' : 'Taxa de Aprovação';
+
+        // Update PDF template footer/header info
+        const docFooterSpan = document.querySelector('.doc-footer span');
+        if (docFooterSpan) {
+            docFooterSpan.innerHTML = data.role === 'dev' 
+                ? 'eSocial Brasil Review - &bull; Relatório devs Programador'
+                : 'eSocial Brasil Review - &bull; Relatório devs QA';
+        }
+
+        // Update PDF breakdown column headers dynamically
+        const docApprovedColHdr = pdfTemplateTarget.querySelector('.doc-breakdown-col:nth-child(1) .col-hdr');
+        const docReprovedColHdr = pdfTemplateTarget.querySelector('.doc-breakdown-col:nth-child(2) .col-hdr');
+        if (docApprovedColHdr) {
+            docApprovedColHdr.textContent = data.role === 'dev' ? '🟢 Concluídos / Teste' : '🟢 Aprovados';
+        }
+        if (docReprovedColHdr) {
+            docReprovedColHdr.textContent = data.role === 'dev' ? '🔴 Outros / Em Andamento' : '🔴 Reprovados';
+        }
+
         // Feedback Section
         docFeedbackCard.className = `doc-feedback-card ${data.feedback.docBandClass}`;
         if (docFeedbackScore) {
@@ -878,15 +1178,36 @@ Total Testados:
         docTableBody.innerHTML = '';
         data.tasks.forEach(t => {
             const tr = document.createElement('tr');
+            const statusInfo = getStatusInfo(t.status, data.role);
+            const compTd = data.role === 'dev'
+                ? `<td class="col-complexity"><span class="complexity-badge ${t.complexity.class}">${t.complexity.label}</span></td>`
+                : `<td class="col-complexity" style="display: none;"><span class="complexity-badge ${t.complexity.class}">${t.complexity.label}</span></td>`;
+
+            let pdfStatusStyle = '';
+            if (statusInfo.badgeClass === 'aprovado') {
+                pdfStatusStyle = 'font-weight: bold; color: #047857;';
+            } else if (statusInfo.badgeClass === 'andamento') {
+                pdfStatusStyle = 'font-weight: bold; color: #b45309;';
+            } else {
+                pdfStatusStyle = 'font-weight: bold; color: #b91c1c;';
+            }
+
             tr.innerHTML = `
                 <td>${t.id}</td>
                 <td>${t.task}</td>
+                ${compTd}
                 <td>${t.employee}</td>
                 <td>${formatDate(t.date)}</td>
                 <td>${t.server || 'Não informado'}</td>
-                <td style="font-weight: bold; color: ${t.status === 'Aprovado' ? '#047857' : '#b91c1c'};">${t.status}</td>
+                <td style="${pdfStatusStyle}">${t.status}</td>
             `;
             docTableBody.appendChild(tr);
+        });
+
+        // Toggle PDF table complexity columns
+        const pdfColComplexities = pdfTemplateTarget.querySelectorAll('.col-complexity');
+        pdfColComplexities.forEach(col => {
+            col.style.display = data.role === 'dev' ? '' : 'none';
         });
 
         // Extra Tasks Section
@@ -906,27 +1227,25 @@ Total Testados:
         docApprovedList.innerHTML = '';
         docReprovedList.innerHTML = '';
 
-        const approvedTasks = data.tasks.filter(t => t.status === 'Aprovado');
-        const reprovedTasks = data.tasks.filter(t => t.status === 'Reprovado');
-
-        if (approvedTasks.length > 0) {
-            approvedTasks.forEach(t => {
-                const li = document.createElement('li');
+        data.tasks.forEach(t => {
+            const statusInfo = getStatusInfo(t.status, data.role);
+            const li = document.createElement('li');
+            
+            if (statusInfo.badgeClass === 'aprovado') {
                 li.textContent = `${t.task} (ID: ${t.id} — ${t.note || 'OK'})`;
                 docApprovedList.appendChild(li);
-            });
-        } else {
-            docApprovedList.innerHTML = '<li>Nenhum teste aprovado</li>';
-        }
-
-        if (reprovedTasks.length > 0) {
-            reprovedTasks.forEach(t => {
-                const li = document.createElement('li');
-                li.textContent = `${t.task} (ID: ${t.id} — Motivo: ${t.note || 'Sem detalhes'})`;
+            } else {
+                const prefix = statusInfo.badgeClass === 'andamento' ? 'Status' : 'Motivo';
+                li.textContent = `${t.task} (ID: ${t.id} — ${prefix}: ${t.note || t.status})`;
                 docReprovedList.appendChild(li);
-            });
-        } else {
-            docReprovedList.innerHTML = '<li>Nenhum teste reprovado</li>';
+            }
+        });
+
+        if (docApprovedList.children.length === 0) {
+            docApprovedList.innerHTML = data.role === 'dev' ? '<li>Nenhuma tarefa concluída</li>' : '<li>Nenhum teste aprovado</li>';
+        }
+        if (docReprovedList.children.length === 0) {
+            docReprovedList.innerHTML = data.role === 'dev' ? '<li>Nenhuma tarefa pendente</li>' : '<li>Nenhum teste reprovado</li>';
         }
     }
 
@@ -1138,6 +1457,11 @@ Total Testados:
 
                     .doc-footer { margin-top:auto; padding-top:12px; border-top:1px solid #e5e7eb; display:flex; justify-content:space-between; font-size:9px; color:#9ca3af; }
 
+                    .complexity-badge { display:inline-flex; align-items:center; gap:4px; padding:2px 6px; border-radius:12px; font-size:8px; font-weight:600; text-transform:uppercase; border:1px solid transparent; }
+                    .complexity-badge.facil { background:#d1fae5; color:#047857; border-color:rgba(16,185,129,0.3); }
+                    .complexity-badge.media { background:#fef3c7; color:#b45309; border-color:rgba(245,158,11,0.3); }
+                    .complexity-badge.dificil { background:#fee2e2; color:#b91c1c; border-color:rgba(239,68,68,0.3); }
+
                     /* ── Page-break marker (screen) ──────────────────────────── */
                     .pdf-page-break-marker {
                         display: flex;
@@ -1314,26 +1638,44 @@ Total Testados:
     function rebuildRawTextFromTasks(tasks, extraTasksList) {
         if (!tasks || tasks.length === 0) return "";
         let text = "";
+        const role = userRoleSelect.value;
+
         tasks.forEach((t, index) => {
             const num = String(index + 1).padStart(2, '0');
             text += `📌 CARD ${num}\n\n`;
             text += `Nome do card: ${t.task}\n`;
             text += `ID do card: ${t.id}\n`;
             text += `Servidor: ${t.server || 'Não informado'}\n`;
-            text += `Status: ${t.status === 'Aprovado' ? 'APROVADO' : 'NEGADO'}\n`;
+            text += `Status: ${t.status}\n`;
             text += `Observação teste: ${t.note || ''}\n\n`;
         });
         
-        const approvedCount = tasks.filter(t => t.status === 'Aprovado').length;
-        const reprovedCount = tasks.filter(t => t.status === 'Reprovado').length;
-        
-        text += `📊 RESULTADOS DO DIA\n`;
-        text += `Aprovados: ${approvedCount}\n`;
-        text += `Reprovados: ${reprovedCount}\n`;
-        text += `Total Testados: ${tasks.length}\n\n`;
+        if (role === 'dev') {
+            let movidoCount = 0;
+            let andamentoCount = 0;
+            tasks.forEach(t => {
+                const statusInfo = getStatusInfo(t.status, 'dev');
+                if (statusInfo.badgeClass === 'aprovado') {
+                    movidoCount++;
+                } else {
+                    andamentoCount++;
+                }
+            });
+            text += `📊 RESULTADOS DO DIA\n`;
+            text += `Movido para teste: ${movidoCount}\n`;
+            text += `Em andamento: ${andamentoCount}\n`;
+            text += `Total Tarefas: ${tasks.length}\n\n`;
+        } else {
+            const approvedCount = tasks.filter(t => t.status === 'Aprovado').length;
+            const reprovedCount = tasks.filter(t => t.status === 'Reprovado').length;
+            text += `📊 RESULTADOS DO DIA\n`;
+            text += `Aprovados: ${approvedCount}\n`;
+            text += `Reprovados: ${reprovedCount}\n`;
+            text += `Total Testados: ${tasks.length}\n\n`;
+        }
         
         if (extraTasksList && extraTasksList.length > 0) {
-            text += `🧪 TAREFAS EXTRAS TESTADAS\n`;
+            text += role === 'dev' ? `🧪 TAREFAS EXTRAS REALIZADAS\n` : `🧪 TAREFAS EXTRAS TESTADAS\n`;
             extraTasksList.forEach(et => {
                 text += `- ${et}\n`;
             });
@@ -1432,6 +1774,11 @@ Total Testados:
                     if (entry.parsedData.testerName) {
                         testerNameInput.value = entry.parsedData.testerName;
                         localStorage.setItem('testerName', entry.parsedData.testerName);
+                    }
+                    if (entry.parsedData.role) {
+                        userRoleSelect.value = entry.parsedData.role;
+                        localStorage.setItem('userRole', entry.parsedData.role);
+                        updateScoreInfoModalText();
                     }
                     if (entry.parsedData.extraTasks !== undefined) {
                         extraTasksInput.value = entry.parsedData.extraTasks;
