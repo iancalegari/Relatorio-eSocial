@@ -54,6 +54,37 @@ body.role-dev {
     --scrollbar-thumb-hover-color: rgba(245, 158, 11, 0.6);
 }
 
+body.role-dev .band-green {
+    border-color: rgba(245, 158, 11, 0.3) !important;
+}
+body.role-dev .band-green .score-ring {
+    border-color: var(--color-success);
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
+}
+body.role-dev .band-green .rating-badge {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+body.role-dev .band-green .avatar-icon {
+    color: var(--color-success);
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.2);
+}
+
+body.role-dev .doc-band-green {
+    border-left-color: #f59e0b;
+}
+body.role-dev .doc-band-green .doc-score-ring {
+    border-color: #f59e0b;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+}
+body.role-dev .doc-band-green .doc-feedback-badge {
+    background: #fef3c7;
+    color: #b45309;
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
 body.role-qa {
     --primary: #10b981;
     --primary-glow: rgba(16, 185, 129, 0.35);
